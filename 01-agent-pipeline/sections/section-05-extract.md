@@ -10,6 +10,19 @@ After completing this section you will have:
 - `tests/test_extract.py` with full test coverage using mocked Tavily Extract and patched trafilatura
 - A robust extraction cascade that always returns content (never fails the pipeline)
 
+## Implementation Notes (Actual)
+
+**Files created:**
+- `beacon/extract.py` - Content extraction cascade (logging, per-URL exception safety)
+- `tests/test_extract.py` - 11 tests across 6 test classes
+
+**Deviations from plan:**
+- Added `logging` module with `logger.warning()` for Tavily batch failures and per-URL trafilatura errors, and `logger.info()` for fallback counts (reviewer recommendation, user approved)
+- Added try/except in `_fetch_with_trafilatura` so individual URL failures don't crash `asyncio.gather` (reviewer recommendation, auto-fixed)
+- Dropped `test_uses_correct_tavily_params` and `test_trafilatura_called_with_correct_params` since plan hedges on exact Tavily SDK param names
+- Added `TestMixedResults` class with 2 tests: mixed Tavily success/failure and trafilatura exception fallback to snippet (reviewer recommendation)
+- Did not implement auto-creation of Tavily client when `client=None` (pipeline always passes client)
+
 ## Dependencies
 
 - **Section 01 (Foundation)**: `config.py` constants (`EXTRACT_SEMAPHORE_LIMIT`, `CONTENT_MIN_LENGTH`, `CONTENT_MAX_LENGTH`), `conftest.py`
