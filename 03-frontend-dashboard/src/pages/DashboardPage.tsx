@@ -5,6 +5,7 @@ import DashboardHeader from "@/components/DashboardHeader";
 import TabNavigation, { type TabId } from "@/components/TabNavigation";
 import SourceCard from "@/components/SourceCard";
 import MarkdownViewer from "@/components/MarkdownViewer";
+import ConceptMap from "@/components/ConceptMap";
 import type { PreparedRouterState } from "@/lib/prepareRouterState";
 import { API_BASE_URL } from "@/config";
 
@@ -95,8 +96,8 @@ const DashboardPage = () => {
         )}
 
         {activeTab === "concept-map" && (
-          <div className="animate-fade-in" data-testid="concept-map-placeholder">
-            <p className="text-muted-foreground text-center py-8">Concept map coming soon...</p>
+          <div className="animate-fade-in">
+            <ConceptMap data={(researchState.artifacts.concept_map as string) || ""} />
           </div>
         )}
 

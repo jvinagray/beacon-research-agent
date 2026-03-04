@@ -90,4 +90,9 @@
   .glow-red {
     box-shadow: 0 0 12px hsl(var(--score-red) / 0.5);
   }
+
+  .concept-map-link {
+    stroke: #475569;
+    stroke-width: 1.5;
+  }
 }
