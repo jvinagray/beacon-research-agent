@@ -1,19 +1,82 @@
-const MarkdownViewer = ({ content }: { content: string }) => {
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import type { Components } from "react-markdown";
+
+interface MarkdownViewerProps {
+  content: string;
+}
+
+const components: Components = {
+  a: ({ children, href, ...props }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-primary hover:text-primary/80 transition-colors"
+      {...props}
+    >
+      {children}
+    </a>
+  ),
+  pre: ({ children, ...props }) => (
+    <pre
+      className="glass p-4 rounded-lg text-sm overflow-x-auto"
+      {...props}
+    >
+      {children}
+    </pre>
+  ),
+  code: ({ children, className, ...props }) => {
+    // Inline code only — block code is handled by `pre` override
+    if (className?.includes("language-")) {
+      return <code className={className} {...props}>{children}</code>;
+    }
+    return (
+      <code className="px-1.5 py-0.5 rounded bg-muted text-sm" {...props}>
+        {children}
+      </code>
+    );
+  },
+  tr: ({ children, ...props }) => (
+    <tr className="even:bg-glass-highlight/10" {...props}>
+      {children}
+    </tr>
+  ),
+  table: ({ children, ...props }) => (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse glass rounded-lg overflow-hidden" {...props}>
+        {children}
+      </table>
+    </div>
+  ),
+  th: ({ children, ...props }) => (
+    <th className="px-4 py-2 text-left text-sm font-semibold border-b border-glass-border" {...props}>
+      {children}
+    </th>
+  ),
+  td: ({ children, ...props }) => (
+    <td className="px-4 py-2 text-sm border-b border-glass-border" {...props}>
+      {children}
+    </td>
+  ),
+};
+
+const MarkdownViewer = ({ content }: MarkdownViewerProps) => {
+  if (!content || !content.trim()) {
+    return (
+      <div className="prose prose-invert max-w-none">
+        <p className="text-muted-foreground text-center py-8">
+          No summary was generated for this research.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="glass p-8 max-w-3xl mx-auto prose-invert">
-      <div
-        className="text-foreground leading-relaxed space-y-4
-          [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:text-foreground [&_h1]:mb-4
-          [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-foreground [&_h2]:mb-3 [&_h2]:mt-6
-          [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-foreground [&_h3]:mb-2 [&_h3]:mt-4
-          [&_p]:text-sm [&_p]:text-muted-foreground [&_p]:leading-relaxed
-          [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:text-sm [&_ul]:text-muted-foreground
-          [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:text-sm [&_ol]:text-muted-foreground
-          [&_li]:mb-1
-          [&_strong]:text-foreground [&_strong]:font-semibold
-          [&_blockquote]:border-l-2 [&_blockquote]:border-primary/40 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground"
-        dangerouslySetInnerHTML={{ __html: content }}
-      />
+    <div className="prose prose-invert max-w-none overflow-auto">
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+        {content}
+      </ReactMarkdown>
     </div>
   );
 };

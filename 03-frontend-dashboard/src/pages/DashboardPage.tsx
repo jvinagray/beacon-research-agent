@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import DashboardHeader from "@/components/DashboardHeader";
 import TabNavigation, { type TabId } from "@/components/TabNavigation";
 import SourceCard from "@/components/SourceCard";
+import MarkdownViewer from "@/components/MarkdownViewer";
 import type { PreparedRouterState } from "@/lib/prepareRouterState";
 import { API_BASE_URL } from "@/config";
 
@@ -89,7 +90,7 @@ const DashboardPage = () => {
 
         {activeTab === "summary" && (
           <div className="animate-fade-in" data-testid="summary-placeholder">
-            <p className="text-muted-foreground text-center py-8">Summary view coming soon...</p>
+            <MarkdownViewer content={(researchState.artifacts.summary as string) || ""} />
           </div>
         )}
 
