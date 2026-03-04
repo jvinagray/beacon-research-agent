@@ -69,7 +69,7 @@ const SourceCard = ({ source }: SourceCardProps) => {
       </div>
 
       <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
-        {signals.key_insight}
+        {signals.key_insight || (failed ? "Evaluation could not be completed." : "")}
       </p>
 
       <button

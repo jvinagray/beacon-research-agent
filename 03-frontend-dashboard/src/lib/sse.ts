@@ -10,6 +10,7 @@ export function connectSSE(params: {
   onError: (error: Error) => void;
 }): void {
   const { topic, depth, signal, onEvent, onError } = params;
+  let errorHandled = false;
 
   fetchEventSource(`${API_BASE_URL}/api/research`, {
     method: 'POST',
@@ -36,6 +37,14 @@ export function connectSSE(params: {
     },
 
     onerror(err) {
+      errorHandled = true;
+      if (err instanceof TypeError) {
+        const connectionError = new Error(
+          `Cannot connect to the research server. Make sure it's running at ${API_BASE_URL}.`
+        );
+        onError(connectionError);
+        throw connectionError;
+      }
       onError(err);
       throw err;
     },
@@ -44,6 +53,8 @@ export function connectSSE(params: {
       throw new Error('Connection closed unexpectedly');
     },
   }).catch((err) => {
-    onError(err instanceof Error ? err : new Error(String(err)));
+    if (!errorHandled) {
+      onError(err instanceof Error ? err : new Error(String(err)));
+    }
   });
 }

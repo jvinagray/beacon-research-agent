@@ -5,8 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import SearchPage from "./pages/SearchPage";
 import DashboardPage from "./pages/DashboardPage";
-import NotFound from "./pages/NotFound";
-
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -19,7 +17,7 @@ const App = () => (
           <Route path="/" element={<Navigate to="/search" replace />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<Navigate to="/search" replace />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

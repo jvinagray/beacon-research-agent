@@ -1,4 +1,5 @@
 import { useRef, useCallback, useState, useLayoutEffect } from "react";
+import { RotateCcw } from "lucide-react";
 import Tree from "react-d3-tree";
 import MarkdownViewer from "./MarkdownViewer";
 
@@ -94,12 +95,20 @@ const nodeStyle = {
 const ConceptMap = ({ data }: ConceptMapProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [translate, setTranslate] = useState({ x: 0, y: 50 });
+  const [treeKey, setTreeKey] = useState(0);
   const tree = parseConceptMap(data);
 
   useLayoutEffect(() => {
     if (containerRef.current) {
       setTranslate({ x: containerRef.current.offsetWidth / 2, y: 50 });
     }
+  }, []);
+
+  const handleResetView = useCallback(() => {
+    if (containerRef.current) {
+      setTranslate({ x: containerRef.current.offsetWidth / 2, y: 50 });
+    }
+    setTreeKey((k) => k + 1);
   }, []);
 
   const renderNode = useCallback(
@@ -145,9 +154,18 @@ const ConceptMap = ({ data }: ConceptMapProps) => {
   return (
     <div
       ref={containerRef}
-      className="w-full h-[600px] glass rounded-lg overflow-hidden"
+      className="relative w-full h-[600px] glass rounded-lg overflow-hidden"
     >
+      <button
+        onClick={handleResetView}
+        className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-glass/80 border border-glass-border text-xs text-muted-foreground hover:text-foreground hover:bg-glass-highlight/30 transition-colors"
+        title="Reset View"
+      >
+        <RotateCcw className="h-3 w-3" />
+        Reset View
+      </button>
       <Tree
+        key={treeKey}
         data={tree}
         orientation="vertical"
         pathFunc="step"

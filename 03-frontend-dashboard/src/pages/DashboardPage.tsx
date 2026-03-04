@@ -19,7 +19,9 @@ const DashboardPage = () => {
 
   useEffect(() => {
     if (!researchState || !researchState.sessionId) {
-      navigate("/search");
+      navigate("/search", {
+        state: { message: "Your previous research session has expired." },
+      });
     }
   }, [researchState, navigate]);
 
@@ -75,63 +77,85 @@ const DashboardPage = () => {
       <TabNavigation active={activeTab} onChange={setActiveTab} />
 
       <main className="flex-1 p-6 max-w-5xl mx-auto w-full">
-        {activeTab === "sources" && (
-          <div className="space-y-4 animate-fade-in">
-            {sortedSources.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
-                No sources could be evaluated. Try a different topic.
-              </p>
-            ) : (
-              <div className="grid gap-3">
-                {sortedSources.map((source) => (
-                  <SourceCard key={source.url} source={source} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "summary" && (
-          <div className="animate-fade-in" data-testid="summary-placeholder">
-            <MarkdownViewer content={(researchState.artifacts.summary as string) || ""} />
-          </div>
-        )}
-
-        {activeTab === "concept-map" && (
-          <div className="animate-fade-in">
-            <ConceptMap data={(researchState.artifacts.concept_map as string) || ""} />
-          </div>
-        )}
-
-        {activeTab === "flashcards" && (() => {
-          const rawFlashcards = researchState.artifacts?.flashcards;
-          const flashcards: Flashcard[] = Array.isArray(rawFlashcards) ? rawFlashcards : [];
-          return (
-            <div className="animate-fade-in">
-              {flashcards.length > 0 ? (
-                <div>
-                  <p className="text-muted-foreground mb-4">
-                    {flashcards.length} flashcard{flashcards.length !== 1 ? "s" : ""}
+        <div key={activeTab} className="animate-fade-in">
+          {activeTab === "sources" && (
+            <div className="space-y-4">
+              {sortedSources.length === 0 ? (
+                <div className="glass rounded-xl p-8 text-center">
+                  <p className="text-slate-400 text-lg">
+                    No sources could be evaluated. Try a different topic.
                   </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {flashcards.map((card, idx) => (
-                      <FlashCard
-                        key={idx}
-                        card={card}
-                        index={idx + 1}
-                        total={flashcards.length}
-                      />
-                    ))}
-                  </div>
+                  <button
+                    onClick={() => navigate("/search")}
+                    className="mt-4 px-6 py-2 rounded-lg bg-primary/15 text-primary text-sm font-medium hover:bg-primary/25 transition-colors"
+                  >
+                    New Search
+                  </button>
                 </div>
               ) : (
-                <p className="text-muted-foreground text-center py-8">
-                  No flashcards were generated for this research.
+                <div className="grid gap-3">
+                  {sortedSources.map((source) => (
+                    <SourceCard key={source.url} source={source} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "summary" && (
+            <div data-testid="summary-placeholder">
+              {researchState.artifacts.summary ? (
+                <MarkdownViewer content={researchState.artifacts.summary as string} />
+              ) : (
+                <p className="text-slate-400 text-center py-8">
+                  No summary was generated for this research.
                 </p>
               )}
             </div>
-          );
-        })()}
+          )}
+
+          {activeTab === "concept-map" && (
+            <div>
+              {researchState.artifacts.concept_map ? (
+                <ConceptMap data={researchState.artifacts.concept_map as string} />
+              ) : (
+                <p className="text-slate-400 text-center py-8">
+                  No concept map was generated for this research.
+                </p>
+              )}
+            </div>
+          )}
+
+          {activeTab === "flashcards" && (() => {
+            const rawFlashcards = researchState.artifacts?.flashcards;
+            const flashcards: Flashcard[] = Array.isArray(rawFlashcards) ? rawFlashcards : [];
+            return (
+              <div>
+                {flashcards.length > 0 ? (
+                  <div>
+                    <p className="text-muted-foreground mb-4">
+                      {flashcards.length} flashcard{flashcards.length !== 1 ? "s" : ""}
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {flashcards.map((card, idx) => (
+                        <FlashCard
+                          key={idx}
+                          card={card}
+                          index={idx + 1}
+                          total={flashcards.length}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-slate-400 text-center py-8">
+                    No flashcards were generated for this research.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
+        </div>
       </main>
     </div>
   );
