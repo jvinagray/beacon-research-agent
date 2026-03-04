@@ -174,14 +174,54 @@ describe("DashboardPage", () => {
     expect(screen.getByTestId("summary-placeholder")).toBeInTheDocument();
   });
 
-  it("switching to Flashcards tab renders flip cards area", async () => {
+  it("switching to Flashcards tab renders flashcard components with data", async () => {
     const user = userEvent.setup();
-    renderWithRouter(makeRouterState());
+    const state = makeRouterState({
+      artifacts: {
+        flashcards: [
+          { question: "What is TypeScript?", answer: "A typed superset of JavaScript." },
+          { question: "What is React?", answer: "A UI library." },
+        ],
+      },
+    });
+    renderWithRouter(state);
 
     const flashcardsTab = screen.getByRole("button", { name: /flashcards/i });
     await user.click(flashcardsTab);
 
-    expect(screen.getByTestId("flashcards-placeholder")).toBeInTheDocument();
+    expect(screen.getByText("What is TypeScript?")).toBeInTheDocument();
+    expect(screen.getByText("What is React?")).toBeInTheDocument();
+  });
+
+  it("Flashcards tab shows card count", async () => {
+    const user = userEvent.setup();
+    const state = makeRouterState({
+      artifacts: {
+        flashcards: [
+          { question: "Q1", answer: "A1" },
+          { question: "Q2", answer: "A2" },
+          { question: "Q3", answer: "A3" },
+        ],
+      },
+    });
+    renderWithRouter(state);
+
+    const flashcardsTab = screen.getByRole("button", { name: /flashcards/i });
+    await user.click(flashcardsTab);
+
+    expect(screen.getByText("3 flashcards")).toBeInTheDocument();
+  });
+
+  it("Flashcards tab with empty flashcards shows placeholder message", async () => {
+    const user = userEvent.setup();
+    renderWithRouter(makeRouterState({ artifacts: {} }));
+
+    const flashcardsTab = screen.getByRole("button", { name: /flashcards/i });
+    await user.click(flashcardsTab);
+
+    expect(
+      screen.getByText(/no flashcards were generated/i),
+    ).toBeInTheDocument();
   });
 
   it("export button triggers file download", async () => {

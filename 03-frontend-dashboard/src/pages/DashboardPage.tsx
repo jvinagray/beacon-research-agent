@@ -6,7 +6,9 @@ import TabNavigation, { type TabId } from "@/components/TabNavigation";
 import SourceCard from "@/components/SourceCard";
 import MarkdownViewer from "@/components/MarkdownViewer";
 import ConceptMap from "@/components/ConceptMap";
+import FlashCard from "@/components/FlashCard";
 import type { PreparedRouterState } from "@/lib/prepareRouterState";
+import type { Flashcard } from "@/types/research";
 import { API_BASE_URL } from "@/config";
 
 const DashboardPage = () => {
@@ -101,11 +103,35 @@ const DashboardPage = () => {
           </div>
         )}
 
-        {activeTab === "flashcards" && (
-          <div className="animate-fade-in" data-testid="flashcards-placeholder">
-            <p className="text-muted-foreground text-center py-8">Flashcards coming soon...</p>
-          </div>
-        )}
+        {activeTab === "flashcards" && (() => {
+          const rawFlashcards = researchState.artifacts?.flashcards;
+          const flashcards: Flashcard[] = Array.isArray(rawFlashcards) ? rawFlashcards : [];
+          return (
+            <div className="animate-fade-in">
+              {flashcards.length > 0 ? (
+                <div>
+                  <p className="text-muted-foreground mb-4">
+                    {flashcards.length} flashcard{flashcards.length !== 1 ? "s" : ""}
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {flashcards.map((card, idx) => (
+                      <FlashCard
+                        key={idx}
+                        card={card}
+                        index={idx + 1}
+                        total={flashcards.length}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-8">
+                  No flashcards were generated for this research.
+                </p>
+              )}
+            </div>
+          );
+        })()}
       </main>
     </div>
   );
