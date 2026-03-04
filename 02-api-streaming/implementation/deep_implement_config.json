@@ -22,6 +22,10 @@
     "section-02-models": {
       "status": "complete",
       "commit_hash": "ed80762"
+    },
+    "section-03-sessions": {
+      "status": "complete",
+      "commit_hash": "1e46573"
     }
   },
   "pre_commit": {

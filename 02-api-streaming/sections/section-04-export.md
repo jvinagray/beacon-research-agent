@@ -250,3 +250,19 @@ Required imports: `json` (for parsing JSON-string artifacts), `datetime` (for fo
 - Every artifact access should use `.get()` with a None fallback and check for None before rendering.
 - Never crash on unexpected types -- use `str()` as a last resort.
 - Sources are always sorted by `learning_efficiency_score` descending before rendering.
+
+---
+
+## Implementation Status
+
+**Files created:**
+- `02-api-streaming/server/export.py` — `topic_slug()`, `generate_markdown()`, `_parse_flashcards()`, `_render_resources()`
+- `02-api-streaming/tests/test_export.py` — 25 tests (23 planned + 2 from review)
+
+**Deviations from plan:**
+- **Empty slug fallback:** `topic_slug()` returns `"research"` when input produces empty slug (e.g. pure CJK characters). Added per code review.
+- **Dict list rendering:** `_render_resources` renders list values inside dicts as comma-separated strings rather than Python repr.
+- **Additional tests (25 total):**
+  - `test_slug_empty_input_returns_fallback` — verifies empty slug fallback
+  - `test_generate_markdown_with_conftest_fixture` — integration test using shared fixtures
+- **Strengthened assertions:** Added date and URL assertions per code review.
