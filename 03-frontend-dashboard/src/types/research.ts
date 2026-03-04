@@ -68,6 +68,7 @@ export interface ResearchState {
   sourceTotal: number;
   artifacts: Record<string, string | object>;
   sessionId: string | null;
+  summary: CompleteSummary | null;
   error: { message: string; recoverable: boolean } | null;
 }
 
