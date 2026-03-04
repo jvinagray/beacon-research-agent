@@ -49,15 +49,7 @@ const ProgressFeed = ({ status, statusMessage, sources, sourceTotal }: ProgressF
               className="animate-fade-in-up"
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              <SourceCard
-                title={source.title}
-                url={source.url}
-                score={source.signals.learning_efficiency_score}
-                contentType={source.signals.content_type}
-                timeEstimate={`${source.signals.time_estimate_minutes} min`}
-                keyInsight={source.signals.key_insight}
-                failed={source.signals.evaluation_failed}
-              />
+              <SourceCard source={source} />
             </div>
           ))}
         </div>
