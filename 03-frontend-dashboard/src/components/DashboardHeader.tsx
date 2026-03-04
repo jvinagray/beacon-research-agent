@@ -12,7 +12,7 @@ const DashboardHeader = ({ topic, sourceCount, onExport, exportDisabled }: Dashb
     <header className="w-full flex items-center justify-between px-6 py-4 glass border-t-0 border-x-0 rounded-none">
       <div className="flex items-center gap-3">
         <h1 className="text-xl font-bold text-foreground tracking-tight">Beacon</h1>
-        <span className="text-sm text-muted-foreground hidden sm:inline truncate max-w-xs" title={topic}>
+        <span className="text-sm text-muted-foreground hidden sm:inline-block truncate max-w-[400px]" title={topic}>
           / {topic}
         </span>
       </div>

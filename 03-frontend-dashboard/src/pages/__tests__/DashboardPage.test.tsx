@@ -71,7 +71,9 @@ describe("DashboardPage", () => {
 
   it("redirects to /search when no router state present", () => {
     renderWithRouter(null);
-    expect(mockNavigate).toHaveBeenCalledWith("/search");
+    expect(mockNavigate).toHaveBeenCalledWith("/search", {
+      state: { message: expect.stringMatching(/expired/i) },
+    });
   });
 
   it("renders Sources tab by default with source cards", () => {
@@ -288,6 +290,8 @@ describe("DashboardPage", () => {
   it("redirects to /search when sessionId is null", () => {
     renderWithRouter(makeRouterState({ sessionId: null }));
 
-    expect(mockNavigate).toHaveBeenCalledWith("/search");
+    expect(mockNavigate).toHaveBeenCalledWith("/search", {
+      state: { message: expect.stringMatching(/expired/i) },
+    });
   });
 });

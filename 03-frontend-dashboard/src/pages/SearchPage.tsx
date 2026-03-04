@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { X } from "lucide-react";
 import SearchInput from "@/components/SearchInput";
 import DepthSelector, { type Depth } from "@/components/DepthSelector";
 import ProgressFeed from "@/components/ProgressFeed";
@@ -11,6 +12,19 @@ const SearchPage = () => {
   const [depth, setDepth] = useState<Depth>("standard");
   const { state, startResearch, reset } = useResearch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [infoBanner, setInfoBanner] = useState<string | null>(null);
+
+  useEffect(() => {
+    const msg = (location.state as { message?: string } | null)?.message;
+    if (msg) {
+      setInfoBanner(msg);
+      // Clear the location state so banner doesn't reappear on re-render
+      window.history.replaceState({}, "");
+      const timer = setTimeout(() => setInfoBanner(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
 
   const isActive = state.status === "loading" || state.status === "streaming";
 
@@ -41,6 +55,20 @@ const SearchPage = () => {
       </div>
 
       <div className="relative z-10 flex flex-col items-center gap-8 w-full">
+        {/* Info Banner (e.g. session expired) */}
+        {infoBanner && (
+          <div className="w-full max-w-2xl glass rounded-xl p-4 border-l-4 border-slate-400 flex items-center justify-between animate-fade-in">
+            <p className="text-slate-300 text-sm">{infoBanner}</p>
+            <button
+              onClick={() => setInfoBanner(null)}
+              className="text-slate-400 hover:text-foreground transition-colors ml-3 shrink-0"
+              aria-label="Dismiss"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         {/* Logo */}
         <div className="flex flex-col items-center gap-2">
           <h1 className="text-4xl font-bold tracking-tight text-foreground">
