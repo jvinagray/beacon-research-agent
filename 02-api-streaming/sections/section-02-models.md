@@ -204,3 +204,11 @@ These models are consumed by later sections, summarized here for reference only:
 |------|--------|-------------|
 | `C:\git_repos\playground\hackathon\02-api-streaming\tests\test_models.py` | Create | Tests for ResearchRequest validation and CompleteSummary serialization |
 | `C:\git_repos\playground\hackathon\02-api-streaming\server\models.py` | Create | Three Pydantic models: `ResearchRequest`, `ResearchSummary`, `CompleteSummary` |
+
+---
+
+## Implementation Notes (Post-Review)
+
+- **Added `Field(ge=0)` to `source_count`** to prevent negative values (auto-fix from code review).
+- **Topic field left as bare `str`** -- user decision to handle length constraints at a different layer.
+- All 8 tests pass. Implementation matches plan exactly otherwise.
