@@ -26,6 +26,10 @@
     "section-03-sessions": {
       "status": "complete",
       "commit_hash": "1e46573"
+    },
+    "section-04-export": {
+      "status": "complete",
+      "commit_hash": "cd60108"
     }
   },
   "pre_commit": {

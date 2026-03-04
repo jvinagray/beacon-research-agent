@@ -423,3 +423,19 @@ Note: The `complete` event carries a `CompleteSummary` (lightweight), NOT the fu
 3. Implement `stream_research()` in `C:\git_repos\playground\hackathon\02-api-streaming\server\sse.py`
 4. Run tests: `cd C:\git_repos\playground\hackathon\02-api-streaming && uv run pytest tests/test_sse.py -v`
 5. Verify all tests pass
+
+---
+
+## Implementation Notes (Post-Implementation)
+
+**Files created:**
+- `C:\git_repos\playground\hackathon\02-api-streaming\server\sse.py` (68 lines)
+- `C:\git_repos\playground\hackathon\02-api-streaming\tests\test_sse.py` (18 tests)
+
+**Deviations from plan:**
+- **`id` parameter passed as `str(event_id)`** instead of raw int. Code review discovered that `sse-starlette.ServerSentEvent` expects `id: Optional[str]`; passing int would crash at `encode()` time. The SSE spec also mandates string IDs.
+- **No `asyncio.CancelledError` catch in `stream_research`**: Plan stated no try/except needed; initial implementation added one defensively, but it was removed per code review to avoid interfering with `EventSourceResponse` cleanup.
+- **Added wire-format serialization test**: `test_sse_wire_format_serialization` calls `.encode()` to verify actual SSE output bytes, catching type mismatches that attribute-level assertions miss.
+- **Happy-path test extended**: `test_happy_path_all_event_types` now also verifies session storage after the complete event.
+
+**Test count:** 18 tests (8 format_sse_event + 9 stream_research + 1 serialization)
