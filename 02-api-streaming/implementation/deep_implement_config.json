@@ -14,7 +14,16 @@
     "section-05-sse",
     "section-06-routes-app"
   ],
-  "sections_state": {},
+  "sections_state": {
+    "section-01-foundation": {
+      "status": "complete",
+      "commit_hash": "cd7153f"
+    },
+    "section-02-models": {
+      "status": "complete",
+      "commit_hash": "ed80762"
+    }
+  },
   "pre_commit": {
     "present": false,
     "type": "none",
