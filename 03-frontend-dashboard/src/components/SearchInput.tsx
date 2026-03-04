@@ -4,9 +4,10 @@ interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit?: () => void;
+  disabled?: boolean;
 }
 
-const SearchInput = ({ value, onChange, onSubmit }: SearchInputProps) => {
+const SearchInput = ({ value, onChange, onSubmit, disabled }: SearchInputProps) => {
   return (
     <div className="glass-input flex items-center gap-3 px-5 py-4 w-full max-w-2xl">
       <Search className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -16,7 +17,8 @@ const SearchInput = ({ value, onChange, onSubmit }: SearchInputProps) => {
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && onSubmit?.()}
         placeholder="What do you want to learn about?"
-        className="bg-transparent w-full text-foreground placeholder:text-muted-foreground outline-none text-lg"
+        disabled={disabled}
+        className="bg-transparent w-full text-foreground placeholder:text-muted-foreground outline-none text-lg disabled:opacity-50"
       />
     </div>
   );
