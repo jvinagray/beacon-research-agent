@@ -257,7 +257,17 @@ The sleep-first pattern means the first cleanup runs after `interval_seconds`, n
 
 ## Testing Notes
 
-- The `session_store` fixture from `conftest.py` (Section 01) should create a `SessionStore(ttl_seconds=2, max_sessions=3)` -- a short TTL and small capacity so tests can verify expiration and eviction behavior without long waits.
-- For expiration tests, use `asyncio.sleep()` to wait past the TTL. With a 2-second TTL, sleeping for 2.5 seconds is sufficient. Alternatively, to avoid slow tests, you can directly manipulate the `_timestamps` dict to simulate time passage (e.g., set a timestamp to `datetime.now(timezone.utc) - timedelta(seconds=10)`). The direct manipulation approach is faster and preferred.
-- For the sliding window test, store a session, wait a portion of the TTL, access it (resetting the clock), wait another portion, then verify it is still accessible.
-- For concurrency tests, use `asyncio.gather()` to run multiple store/get/cleanup calls simultaneously. Create a `SessionStore` with `max_sessions=100` for the concurrency test to avoid eviction noise. Assert that the final session count matches expectations and no exceptions were raised.
+- The `session_store` fixture from `conftest.py` (Section 01) uses `SessionStore(ttl_seconds=5, max_sessions=3)` (deviated from plan's ttl=2 to ttl=5, established in Section 01).
+- All expiration tests use direct `_timestamps` manipulation rather than `asyncio.sleep()` for deterministic, fast tests.
+- Eviction tests use explicit timestamp backdating (not sleep-based ordering) per code review feedback.
+- Concurrency tests use `asyncio.gather()` with `max_sessions=100` to avoid eviction noise.
+
+## Deviations from Plan
+
+- **Fixture TTL:** `session_store` fixture uses `ttl_seconds=5` (set in Section 01) instead of plan's `ttl_seconds=2`. Tests adapted accordingly.
+- **Re-store guard:** `store()` checks if `session_id` already exists before capacity check, preventing needless eviction when re-storing the same session. Added per code review.
+- **Additional tests (21 total, plan specified 17):**
+  - `test_store_reuse_existing_id_no_eviction` — verifies re-store guard
+  - `test_cleanup_loop_calls_cleanup_expired` — verifies `run_cleanup_loop` invokes cleanup
+  - `test_cleanup_loop_survives_exception` — verifies loop resilience
+  - `test_cleanup_loop_sleeps_first` — verifies sleep-first pattern
