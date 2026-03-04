@@ -52,7 +52,7 @@ There are no unit tests for this section in the traditional sense -- package con
 
 **File:** `C:\git_repos\playground\hackathon\02-api-streaming\pyproject.toml`
 
-Use `hatchling` as the build backend (matching the pipeline project's convention). The critical detail is the `[tool.uv.sources]` section that tells `uv` where to find the `beacon` package as a local path dependency.
+Use `hatchling` as the build backend (matching the pipeline project's convention). The critical detail is the `[tool.uv.sources]` section that tells `uv` where to find the `beacon-pipeline` package as a local path dependency.
 
 ```toml
 [project]
@@ -61,7 +61,7 @@ version = "0.1.0"
 description = "Beacon API & Streaming Layer - FastAPI server wrapping the research pipeline"
 requires-python = ">=3.11"
 dependencies = [
-    "beacon",
+    "beacon-pipeline",
     "fastapi>=0.115.0",
     "uvicorn>=0.34.0",
     "sse-starlette>=3.3.0",
@@ -76,7 +76,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-beacon = { path = "../01-agent-pipeline" }
+beacon-pipeline = { path = "../01-agent-pipeline" }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -92,7 +92,7 @@ build-backend = "hatchling.build"
 
 **Key details:**
 
-- `beacon` appears in `[project.dependencies]` as a bare name. The actual path resolution is handled by `[tool.uv.sources]` which points at `../01-agent-pipeline`. This is the correct uv + hatchling syntax.
+- **Deviation from plan:** The dependency is listed as `beacon-pipeline` (the distribution name from `01-agent-pipeline/pyproject.toml`) rather than bare `beacon`. The `[tool.uv.sources]` maps `beacon-pipeline` to the local path. The Python import package remains `beacon` (via hatchling's wheel config). This is the correct uv + hatchling syntax.
 - `asyncio_mode = "auto"` means all `async def test_*` functions automatically run as asyncio tests without needing `@pytest.mark.asyncio` decorators.
 - `httpx` is a dev dependency used by `httpx.AsyncClient` for testing FastAPI endpoints.
 - The `[tool.hatch.build.targets.wheel]` section specifies `server` as the package to include in wheels.
@@ -237,9 +237,20 @@ For the `sample_research_result` artifacts dict:
 
 After implementing this section, verify:
 
-1. `uv sync` succeeds in `C:\git_repos\playground\hackathon\02-api-streaming\`
-2. `uv run python -c "from beacon.models import ResearchResult; print('OK')"` prints `OK`
-3. `uv run python -c "import fastapi; import sse_starlette; import httpx; print('OK')"` prints `OK`
-4. `uv run pytest tests/ --co` completes without import errors (may show 0 tests collected, which is fine -- no test files exist yet beyond conftest.py)
-5. The `server/` and `tests/` directories exist with `__init__.py` files
-6. `.env.example` exists with the documented API key placeholders
+1. `uv sync` succeeds in `C:\git_repos\playground\hackathon\02-api-streaming\` -- **PASS**
+2. `uv run python -c "from beacon.models import ResearchResult; print('OK')"` prints `OK` -- **PASS**
+3. `uv run python -c "import fastapi; import sse_starlette; import httpx; print('OK')"` prints `OK` -- **PASS**
+4. `uv run pytest tests/ --co` completes without import errors (0 tests collected) -- **PASS**
+5. The `server/` and `tests/` directories exist with `__init__.py` files -- **PASS**
+6. `.env.example` exists with the documented API key placeholders -- **PASS**
+
+---
+
+## 8. Implementation Notes (Post-Review)
+
+**Code review deviations from plan:**
+
+1. **Package name:** Used `beacon-pipeline` (distribution name) instead of bare `beacon` in pyproject.toml dependencies and uv sources. The upstream package's `[project] name` is `beacon-pipeline`.
+2. **Added ErrorEvent import** to conftest.py (was in plan's import list but initially omitted).
+3. **Added `run_research` import** to conftest.py for downstream test reference.
+4. **Restructured `app` fixture:** Moved `from server.app import create_app` outside the `patch()` context manager for more robust mocking (user decision during code review).
