@@ -1,0 +1,27 @@
+{
+  "plugin_root": "C:\\Users\\svinagray\\.claude\\plugins\\cache\\piercelamb-plugins\\deep-implement\\0.2.0",
+  "sections_dir": "C:\\git_repos\\playground\\hackathon\\02-api-streaming\\sections",
+  "target_dir": "C:\\git_repos\\playground\\hackathon",
+  "state_dir": "C:\\git_repos\\playground\\hackathon\\02-api-streaming\\implementation",
+  "git_root": "C:\\git_repos\\playground\\hackathon",
+  "commit_style": "simple",
+  "test_command": "uv run pytest",
+  "sections": [
+    "section-01-foundation",
+    "section-02-models",
+    "section-03-sessions",
+    "section-04-export",
+    "section-05-sse",
+    "section-06-routes-app"
+  ],
+  "sections_state": {},
+  "pre_commit": {
+    "present": false,
+    "type": "none",
+    "config_file": null,
+    "native_hook": null,
+    "may_modify_files": false,
+    "detected_formatters": []
+  },
+  "created_at": "2026-03-04T14:27:55.542189+00:00"
+}
