@@ -676,3 +676,24 @@ After implementing this section, verify:
 7. `GET /api/export/{invalid_session_id}` returns 404
 8. CORS headers are present on responses
 9. Server starts with `uv run python -m server` or `uv run uvicorn server.app:app`
+
+---
+
+## Implementation Notes (Post-Implementation)
+
+**Files created:**
+- `C:\git_repos\playground\hackathon\02-api-streaming\server\app.py` (55 lines)
+- `C:\git_repos\playground\hackathon\02-api-streaming\server\routes.py` (73 lines)
+- `C:\git_repos\playground\hackathon\02-api-streaming\server\__main__.py` (13 lines)
+- `C:\git_repos\playground\hackathon\02-api-streaming\tests\test_routes.py` (23 tests)
+
+**Files modified:**
+- `C:\git_repos\playground\hackathon\02-api-streaming\tests\conftest.py` -- Updated `client` fixture to trigger lifespan via `app.router.lifespan_context(app)`, since `httpx.ASGITransport` does not run ASGI lifespan events.
+
+**Deviations from plan:**
+- **App factory pattern**: Used `create_app()` function (introduced in section-01 conftest) rather than module-level app construction. This enables per-test isolation.
+- **Semaphore concurrency check**: Plan suggested `semaphore._value` (private attr) or `asyncio.wait_for(timeout=0)`. Used `semaphore.locked()` (public API) instead -- `wait_for(timeout=0)` fails because the acquire task needs one event loop tick before completing, and `_value` is a private attribute. `locked()` returns True when the counter is zero, same semantic.
+- **UTC datetime in export**: Used `datetime.now(timezone.utc)` instead of `datetime.now()` for consistency with the rest of the codebase.
+- **Lifespan in tests**: Added `app.router.lifespan_context(app)` wrapper in `client` fixture since `httpx.ASGITransport` does not trigger ASGI lifespan protocol. Tests that need `app.state` now depend on `client` fixture.
+
+**Test count:** 23 tests (2 health + 4 lifespan + 8 research SSE + 7 export + 2 concurrency) + 72 from prior sections = 95 total

@@ -176,9 +176,14 @@ def app(mock_pipeline):
 
 @pytest.fixture
 async def client(app):
-    """httpx AsyncClient wired to the test FastAPI app."""
+    """httpx AsyncClient wired to the test FastAPI app.
+
+    Triggers the app lifespan so app.state is initialized
+    (sessions, research_semaphore, cleanup task).
+    """
     from httpx import AsyncClient, ASGITransport
 
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as c:
-        yield c
+    async with app.router.lifespan_context(app):
+        async with AsyncClient(transport=transport, base_url="http://test") as c:
+            yield c

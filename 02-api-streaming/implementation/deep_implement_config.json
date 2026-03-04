@@ -30,6 +30,10 @@
     "section-04-export": {
       "status": "complete",
       "commit_hash": "cd60108"
+    },
+    "section-05-sse": {
+      "status": "complete",
+      "commit_hash": "1c9ec0c"
     }
   },
   "pre_commit": {
