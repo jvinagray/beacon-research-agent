@@ -2,6 +2,7 @@
 import asyncio
 import json
 import logging
+import re
 from typing import Any
 
 from anthropic import AsyncAnthropic
@@ -62,12 +63,7 @@ async def _generate_flashcards(context: str, client: AsyncAnthropic) -> list[Fla
     )
     text = response.content[0].text.strip()
     # Strip markdown code fences if present
-    if text.startswith("```"):
-        lines = text.split("\n")
-        lines = lines[1:]  # remove opening ```json or ```
-        if lines and lines[-1].strip() == "```":
-            lines = lines[:-1]
-        text = "\n".join(lines)
+    text = re.sub(r'^\s*```(?:json)?\s*\n(.*?)\n\s*```\s*$', r'\1', text, flags=re.DOTALL)
     try:
         items = json.loads(text)
         return [Flashcard(**item) for item in items]

@@ -14,7 +14,17 @@ export function normalizeArtifact(
         return data as Flashcard[];
       }
       try {
-        return JSON.parse(data) as Flashcard[];
+        // Strip markdown code fences if present
+        let cleaned = data.trim();
+        if (cleaned.startsWith('```')) {
+          const lines = cleaned.split('\n');
+          lines.shift(); // Remove opening fence line
+          if (lines[lines.length - 1]?.trim() === '```') {
+            lines.pop(); // Remove closing fence line
+          }
+          cleaned = lines.join('\n');
+        }
+        return JSON.parse(cleaned) as Flashcard[];
       } catch {
         console.warn(`Failed to parse flashcards JSON: ${data}`);
         return data;

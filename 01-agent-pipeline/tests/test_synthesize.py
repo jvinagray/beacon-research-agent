@@ -237,3 +237,81 @@ class TestPartialFailure:
         assert result.get("concept_map") is not None
         assert result.get("flashcards") is not None
         assert result.get("summary") is None
+
+
+class TestFlashcardFenceStripping:
+    """Tests for markdown code fence stripping in _generate_flashcards."""
+
+    @pytest.mark.asyncio
+    async def test_strips_json_fenced_response(self, sources):
+        """_generate_flashcards strips ```json fenced response and parses flashcards."""
+        client = AsyncMock()
+        flashcards = [{"question": "What is X?", "answer": "X is Y."}]
+        fenced = f'```json\n{json.dumps(flashcards)}\n```'
+        client.messages.create = AsyncMock(side_effect=[
+            _mock_claude_text_response("Summary"),
+            _mock_claude_text_response("Concept map"),
+            _mock_claude_text_response(fenced),
+        ])
+        from beacon.synthesize import synthesize
+        result = await synthesize(sources, "topic", "standard", client=client)
+        assert len(result["flashcards"]) == 1
+        assert result["flashcards"][0].question == "What is X?"
+
+    @pytest.mark.asyncio
+    async def test_strips_plain_fenced_response(self, sources):
+        """_generate_flashcards strips plain ``` fenced response (no language tag)."""
+        client = AsyncMock()
+        flashcards = [{"question": "What is A?", "answer": "A is B."}]
+        fenced = f'```\n{json.dumps(flashcards)}\n```'
+        client.messages.create = AsyncMock(side_effect=[
+            _mock_claude_text_response("Summary"),
+            _mock_claude_text_response("Concept map"),
+            _mock_claude_text_response(fenced),
+        ])
+        from beacon.synthesize import synthesize
+        result = await synthesize(sources, "topic", "standard", client=client)
+        assert len(result["flashcards"]) == 1
+        assert result["flashcards"][0].question == "What is A?"
+
+    @pytest.mark.asyncio
+    async def test_handles_whitespace_around_fences(self, sources):
+        """_generate_flashcards handles response with leading/trailing whitespace around fences."""
+        client = AsyncMock()
+        flashcards = [{"question": "Q1?", "answer": "A1."}]
+        fenced = f'  ```json \n{json.dumps(flashcards)}\n ```  '
+        client.messages.create = AsyncMock(side_effect=[
+            _mock_claude_text_response("Summary"),
+            _mock_claude_text_response("Concept map"),
+            _mock_claude_text_response(fenced),
+        ])
+        from beacon.synthesize import synthesize
+        result = await synthesize(sources, "topic", "standard", client=client)
+        assert len(result["flashcards"]) == 1
+
+    @pytest.mark.asyncio
+    async def test_clean_json_still_works(self, sources):
+        """_generate_flashcards still works with clean unfenced JSON."""
+        client = AsyncMock()
+        flashcards = [{"question": "Q?", "answer": "A."}, {"question": "Q2?", "answer": "A2."}]
+        client.messages.create = AsyncMock(side_effect=[
+            _mock_claude_text_response("Summary"),
+            _mock_claude_text_response("Concept map"),
+            _mock_claude_text_response(json.dumps(flashcards)),
+        ])
+        from beacon.synthesize import synthesize
+        result = await synthesize(sources, "topic", "standard", client=client)
+        assert len(result["flashcards"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_invalid_json_returns_empty_list(self, sources):
+        """_generate_flashcards returns [] for completely invalid JSON."""
+        client = AsyncMock()
+        client.messages.create = AsyncMock(side_effect=[
+            _mock_claude_text_response("Summary"),
+            _mock_claude_text_response("Concept map"),
+            _mock_claude_text_response("This is not JSON at all, just garbage text."),
+        ])
+        from beacon.synthesize import synthesize
+        result = await synthesize(sources, "topic", "standard", client=client)
+        assert result["flashcards"] == []

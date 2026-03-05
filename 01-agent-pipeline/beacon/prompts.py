@@ -89,7 +89,7 @@ Example:
 
 {context}
 
-Respond with ONLY the JSON array."""
+Respond with ONLY the JSON array. Do NOT wrap your response in markdown code fences. No ``` or ```json wrappers."""
 
 
 def build_evaluate_prompt(topic: str, url: str, title: str, snippet: str) -> str:
