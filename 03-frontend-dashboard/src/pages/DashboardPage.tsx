@@ -8,7 +8,9 @@ import MarkdownViewer from "@/components/MarkdownViewer";
 import ConceptMap from "@/components/ConceptMap";
 import FlashCard from "@/components/FlashCard";
 import ChatPanel from "@/components/ChatPanel";
+import ComplexitySlider from "@/components/ComplexitySlider";
 import { useChat } from "@/hooks/useChat";
+import { useRewrite } from "@/hooks/useRewrite";
 import type { PreparedRouterState } from "@/lib/prepareRouterState";
 import type { Flashcard } from "@/types/research";
 import { API_BASE_URL } from "@/config";
@@ -66,6 +68,9 @@ const DashboardPage = () => {
     }
   }, [researchState]);
 
+  const originalSummary = (researchState?.artifacts?.summary as string) || "";
+  const rewriteState = useRewrite(researchState?.sessionId ?? null, originalSummary);
+
   const chatState = useChat(researchState?.sessionId ?? null);
 
   if (!researchState) return null;
@@ -109,7 +114,22 @@ const DashboardPage = () => {
           {activeTab === "summary" && (
             <div data-testid="summary-placeholder">
               {researchState.artifacts.summary ? (
-                <MarkdownViewer content={researchState.artifacts.summary as string} sources={researchState.sources} />
+                <>
+                  <ComplexitySlider
+                    currentLevel={rewriteState.currentLevel}
+                    onLevelChange={rewriteState.requestRewrite}
+                    isStreaming={rewriteState.isStreaming}
+                  />
+                  <div className={rewriteState.isStreaming ? "opacity-50 transition-opacity" : ""}>
+                    <MarkdownViewer
+                      content={rewriteState.content || originalSummary}
+                      sources={researchState.sources}
+                    />
+                    {rewriteState.isStreaming && (
+                      <span className="inline-block w-0.5 h-5 bg-primary animate-pulse ml-0.5" />
+                    )}
+                  </div>
+                </>
               ) : (
                 <p className="text-slate-400 text-center py-8">
                   No summary was generated for this research.
