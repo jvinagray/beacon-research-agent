@@ -81,3 +81,14 @@ export type ResearchAction =
   | { type: 'COMPLETE'; sessionId: string; summary: CompleteSummary }
   | { type: 'ERROR'; message: string; recoverable: boolean }
   | { type: 'RESET' };
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  sources?: { title: string; url: string }[];
+}
+
+export type ChatSSEEvent =
+  | { type: 'delta'; content: string }
+  | { type: 'done'; sources: { title: string; url: string }[] }
+  | { type: 'error'; message: string };
