@@ -1,4 +1,4 @@
-import type { Flashcard, TimelineEvent } from '../types/research';
+import type { Assumption, Conflict, Flashcard, TimelineEvent } from '../types/research';
 
 function stripCodeFences(text: string): string {
   let cleaned = text.trim();
@@ -16,7 +16,7 @@ function stripCodeFences(text: string): string {
 export function normalizeArtifact(
   artifact_type: string,
   data: string | object
-): string | Flashcard[] | TimelineEvent[] | null {
+): string | Flashcard[] | TimelineEvent[] | Conflict[] | Assumption[] | null {
   switch (artifact_type) {
     case 'summary':
     case 'concept_map':
@@ -51,6 +51,38 @@ export function normalizeArtifact(
         return Array.isArray(parsed) ? (parsed as TimelineEvent[]) : [];
       } catch {
         console.warn(`Failed to parse timeline JSON: ${data}`);
+        return [];
+      }
+
+    case 'conflicts':
+      if (Array.isArray(data)) {
+        return data as Conflict[];
+      }
+      if (typeof data !== 'string') {
+        return [];
+      }
+      try {
+        const cleaned = stripCodeFences(data);
+        const parsed = JSON.parse(cleaned);
+        return Array.isArray(parsed) ? (parsed as Conflict[]) : [];
+      } catch {
+        console.warn(`Failed to parse conflicts JSON: ${data}`);
+        return [];
+      }
+
+    case 'assumptions':
+      if (Array.isArray(data)) {
+        return data as Assumption[];
+      }
+      if (typeof data !== 'string') {
+        return [];
+      }
+      try {
+        const cleaned = stripCodeFences(data);
+        const parsed = JSON.parse(cleaned);
+        return Array.isArray(parsed) ? (parsed as Assumption[]) : [];
+      } catch {
+        console.warn(`Failed to parse assumptions JSON: ${data}`);
         return [];
       }
 
