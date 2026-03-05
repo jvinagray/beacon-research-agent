@@ -53,6 +53,14 @@ export interface CompleteSummary {
   artifact_types: string[];
 }
 
+export interface TimelineEvent {
+  date: string;
+  title: string;
+  description: string;
+  source_title: string;
+  significance: 'high' | 'medium' | 'low';
+}
+
 /** Backend sends flashcards as a JSON-encoded string; the artifact normalizer parses into Flashcard[]. */
 export interface Flashcard {
   question: string;
