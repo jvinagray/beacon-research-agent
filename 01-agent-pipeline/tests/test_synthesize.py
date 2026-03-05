@@ -43,10 +43,10 @@ def _mock_claude_text_response(text: str) -> MagicMock:
     return response
 
 
-class TestSynthesizeMakesThreeParallelCalls:
+class TestSynthesizeMakesFourParallelCalls:
     @pytest.mark.asyncio
-    async def test_three_parallel_claude_calls(self, sources):
-        """synthesize() must make exactly 3 Claude API calls (summary, concept_map, flashcards)."""
+    async def test_four_parallel_claude_calls(self, sources):
+        """synthesize() must make exactly 4 Claude API calls (summary, concept_map, flashcards, timeline)."""
         client = AsyncMock()
         flashcards_json = json.dumps([
             {"question": "What is X?", "answer": "X is Y."},
@@ -56,10 +56,11 @@ class TestSynthesizeMakesThreeParallelCalls:
             _mock_claude_text_response("# Executive Summary\n\nSummary content."),
             _mock_claude_text_response("# Concept Map\n\n- Topic A\n  - Subtopic B"),
             _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "test topic", "standard", client=client)
-        assert client.messages.create.call_count == 3
+        assert client.messages.create.call_count == 4
 
 
 class TestModelSelection:
@@ -72,6 +73,7 @@ class TestModelSelection:
             _mock_claude_text_response("Summary"),
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         await synthesize(sources, "test topic", "standard", client=client)
@@ -89,6 +91,7 @@ class TestMaxTokens:
             _mock_claude_text_response("Summary"),
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         await synthesize(sources, "test topic", "standard", client=client)
@@ -104,6 +107,7 @@ class TestMaxTokens:
             _mock_claude_text_response("Summary"),
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         await synthesize(sources, "test topic", "standard", client=client)
@@ -119,11 +123,28 @@ class TestMaxTokens:
             _mock_claude_text_response("Summary"),
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         await synthesize(sources, "test topic", "standard", client=client)
         fc_call = client.messages.create.call_args_list[2]
         assert fc_call[1]["max_tokens"] == 2048
+
+    @pytest.mark.asyncio
+    async def test_timeline_max_tokens_2048(self, sources):
+        """Timeline call must set max_tokens=2048."""
+        client = AsyncMock()
+        flashcards_json = json.dumps([{"question": "Q", "answer": "A"}])
+        client.messages.create = AsyncMock(side_effect=[
+            _mock_claude_text_response("Summary"),
+            _mock_claude_text_response("Concept map"),
+            _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
+        ])
+        from beacon.synthesize import synthesize
+        await synthesize(sources, "test topic", "standard", client=client)
+        timeline_call = client.messages.create.call_args_list[3]
+        assert timeline_call[1]["max_tokens"] == 2048
 
 
 class TestArtifactOutputs:
@@ -136,6 +157,7 @@ class TestArtifactOutputs:
             _mock_claude_text_response("# Executive Summary\n\nKey findings..."),
             _mock_claude_text_response("# Concept Map"),
             _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -151,6 +173,7 @@ class TestArtifactOutputs:
             _mock_claude_text_response("Summary"),
             _mock_claude_text_response("# Concept Map\n\n- Topic\n  - Subtopic"),
             _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -168,6 +191,7 @@ class TestArtifactOutputs:
             _mock_claude_text_response("Summary"),
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -178,19 +202,20 @@ class TestArtifactOutputs:
 
 class TestResourcesArtifact:
     @pytest.mark.asyncio
-    async def test_resources_assembled_without_claude_call(self, sources):
-        """Resources artifact is built from source data, no Claude call needed."""
+    async def test_resources_assembled_without_extra_claude_call(self, sources):
+        """Resources artifact is built from source data, no extra Claude call needed."""
         client = AsyncMock()
         flashcards_json = json.dumps([{"question": "Q", "answer": "A"}])
         client.messages.create = AsyncMock(side_effect=[
             _mock_claude_text_response("Summary"),
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
         assert "resources" in result
-        assert client.messages.create.call_count == 3
+        assert client.messages.create.call_count == 4
 
     @pytest.mark.asyncio
     async def test_resources_contains_all_sources_with_signals(self, sources):
@@ -201,6 +226,7 @@ class TestResourcesArtifact:
             _mock_claude_text_response("Summary"),
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -231,6 +257,7 @@ class TestPartialFailure:
             Exception("Summary generation failed"),
             _mock_claude_text_response("# Concept Map\n\nContent."),
             _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -252,6 +279,7 @@ class TestFlashcardFenceStripping:
             _mock_claude_text_response("Summary"),
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(fenced),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -268,6 +296,7 @@ class TestFlashcardFenceStripping:
             _mock_claude_text_response("Summary"),
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(fenced),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -284,6 +313,7 @@ class TestFlashcardFenceStripping:
             _mock_claude_text_response("Summary"),
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(fenced),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -298,6 +328,7 @@ class TestFlashcardFenceStripping:
             _mock_claude_text_response("Summary"),
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(json.dumps(flashcards)),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -311,7 +342,103 @@ class TestFlashcardFenceStripping:
             _mock_claude_text_response("Summary"),
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response("This is not JSON at all, just garbage text."),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
         assert result["flashcards"] == []
+
+
+class TestTimelineGeneration:
+    """Tests for _generate_timeline and timeline in synthesize()."""
+
+    @pytest.mark.asyncio
+    async def test_generate_timeline_returns_list_of_event_dicts(self, sources):
+        """_generate_timeline returns list of timeline event dicts."""
+        client = AsyncMock()
+        timeline_events = [
+            {"date": "2024-01", "title": "Launch", "description": "Product launched.",
+             "source_title": "Source A", "significance": "high"},
+            {"date": "2024-06", "title": "Update", "description": "Major update.",
+             "source_title": "Source B", "significance": "medium"},
+        ]
+        client.messages.create = AsyncMock(
+            return_value=_mock_claude_text_response(json.dumps(timeline_events))
+        )
+        from beacon.synthesize import _generate_timeline
+        result = await _generate_timeline("test context", client)
+        assert isinstance(result, list)
+        assert len(result) == 2
+        assert result[0]["title"] == "Launch"
+        assert result[1]["significance"] == "medium"
+
+    @pytest.mark.asyncio
+    async def test_generate_timeline_strips_code_fences(self, sources):
+        """_generate_timeline strips markdown code fences before JSON parsing."""
+        client = AsyncMock()
+        timeline_events = [{"date": "2024-01", "title": "Event", "description": "Desc.",
+                           "source_title": "Src", "significance": "low"}]
+        fenced = f'```json\n{json.dumps(timeline_events)}\n```'
+        client.messages.create = AsyncMock(
+            return_value=_mock_claude_text_response(fenced)
+        )
+        from beacon.synthesize import _generate_timeline
+        result = await _generate_timeline("test context", client)
+        assert isinstance(result, list)
+        assert len(result) == 1
+
+    @pytest.mark.asyncio
+    async def test_generate_timeline_returns_empty_on_malformed_json(self, sources):
+        """_generate_timeline returns empty list on malformed JSON."""
+        client = AsyncMock()
+        client.messages.create = AsyncMock(
+            return_value=_mock_claude_text_response("This is prose, not JSON.")
+        )
+        from beacon.synthesize import _generate_timeline
+        result = await _generate_timeline("test context", client)
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_generate_timeline_returns_empty_on_non_json(self, sources):
+        """_generate_timeline returns empty list on non-JSON response."""
+        client = AsyncMock()
+        client.messages.create = AsyncMock(
+            return_value=_mock_claude_text_response("No temporal events found")
+        )
+        from beacon.synthesize import _generate_timeline
+        result = await _generate_timeline("test context", client)
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_synthesize_includes_timeline_in_artifacts(self, sources):
+        """synthesize() includes timeline in returned artifacts dict."""
+        client = AsyncMock()
+        flashcards_json = json.dumps([{"question": "Q", "answer": "A"}])
+        timeline_json = json.dumps([{"date": "2024-01", "title": "E", "description": "D",
+                                     "source_title": "S", "significance": "high"}])
+        client.messages.create = AsyncMock(side_effect=[
+            _mock_claude_text_response("Summary"),
+            _mock_claude_text_response("Concept map"),
+            _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(timeline_json),
+        ])
+        from beacon.synthesize import synthesize
+        result = await synthesize(sources, "topic", "standard", client=client)
+        assert "timeline" in result
+        assert isinstance(result["timeline"], list)
+        assert len(result["timeline"]) == 1
+
+    @pytest.mark.asyncio
+    async def test_synthesize_runs_timeline_in_parallel(self, sources):
+        """synthesize() runs timeline generation in parallel — 4 calls total."""
+        client = AsyncMock()
+        flashcards_json = json.dumps([{"question": "Q", "answer": "A"}])
+        client.messages.create = AsyncMock(side_effect=[
+            _mock_claude_text_response("Summary"),
+            _mock_claude_text_response("Concept map"),
+            _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # empty timeline
+        ])
+        from beacon.synthesize import synthesize
+        await synthesize(sources, "topic", "standard", client=client)
+        assert client.messages.create.call_count == 4

@@ -97,6 +97,32 @@ Example:
 
 Respond with ONLY the JSON array. Do NOT wrap your response in markdown code fences. No ``` or ```json wrappers."""
 
+GENERATE_TIMELINE_PROMPT = """\
+You are a research timeline builder. Based on the sources provided below, extract 5-15 temporal events that represent key milestones, releases, breakthroughs, or shifts in thinking.
+
+Output a JSON array of objects sorted chronologically, each with these fields:
+- date (string): Date or time period (e.g. "2024-01", "March 2023", "2022 Q3")
+- title (string): Short event title
+- description (string): 1-2 sentence description of the event
+- source_title (string): Title of the source this event came from
+- significance (string): One of "high", "medium", or "low"
+
+Include milestones, releases, breakthroughs, and shifts in thinking.
+
+Example:
+[
+  {{"date": "2024-01", "title": "Initial Release", "description": "The framework was first released with core features.", "source_title": "Official Blog", "significance": "high"}},
+  {{"date": "2024-06", "title": "Major Update", "description": "Added plugin system and improved performance.", "source_title": "Release Notes", "significance": "medium"}}
+]
+
+If there is no meaningful temporal dimension to the sources, return an empty array [].
+
+Do NOT wrap your response in markdown code fences. No ``` or ```json wrappers.
+
+{context}
+
+Respond with ONLY the JSON array."""
+
 
 def build_evaluate_prompt(topic: str, url: str, title: str, snippet: str) -> str:
     """Build a fully formatted evaluation prompt for a single source.
