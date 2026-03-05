@@ -449,3 +449,106 @@ class TestRewriteEndpoint:
             )
         assert response.status_code == 200
         assert "text/event-stream" in response.headers.get("content-type", "")
+
+
+# ---------------------------------------------------------------------------
+# POST /api/drilldown/{session_id}
+# ---------------------------------------------------------------------------
+
+
+class TestDrilldownEndpoint:
+    async def test_returns_404_unknown_session(self, client):
+        response = await client.post(
+            "/api/drilldown/nonexistent-session-id",
+            json={"concept": "neural networks"},
+        )
+        assert response.status_code == 404
+
+    async def test_returns_404_expired_session(
+        self, client, app, sample_research_result
+    ):
+        from datetime import datetime, timedelta, timezone
+
+        sessions = app.state.sessions
+        await sessions.store("drilldown-expired", sample_research_result)
+        sessions._timestamps["drilldown-expired"] = datetime.now(
+            timezone.utc
+        ) - timedelta(hours=2)
+        response = await client.post(
+            "/api/drilldown/drilldown-expired",
+            json={"concept": "test"},
+        )
+        assert response.status_code == 404
+
+    async def test_returns_422_for_whitespace_only_concept(
+        self, client, app, sample_research_result
+    ):
+        sessions = app.state.sessions
+        await sessions.store("drilldown-session-ws", sample_research_result)
+
+        response = await client.post(
+            "/api/drilldown/drilldown-session-ws",
+            json={"concept": "   "},
+        )
+        assert response.status_code == 422
+
+    async def test_returns_422_for_empty_concept(
+        self, client, app, sample_research_result
+    ):
+        sessions = app.state.sessions
+        await sessions.store("drilldown-session-empty", sample_research_result)
+
+        response = await client.post(
+            "/api/drilldown/drilldown-session-empty",
+            json={"concept": ""},
+        )
+        assert response.status_code == 422
+
+    async def test_returns_422_for_concept_over_500_chars(
+        self, client, app, sample_research_result
+    ):
+        sessions = app.state.sessions
+        await sessions.store("drilldown-session-long", sample_research_result)
+
+        response = await client.post(
+            "/api/drilldown/drilldown-session-long",
+            json={"concept": "x" * 501},
+        )
+        assert response.status_code == 422
+
+    async def test_returns_200_sse_for_valid_session(
+        self, client, app, sample_research_result
+    ):
+        sessions = app.state.sessions
+        await sessions.store("drilldown-session-valid", sample_research_result)
+
+        with patch("server.routes.stream_drilldown") as mock_stream:
+
+            async def fake_stream(*args, **kwargs):
+                yield json.dumps({"type": "done", "concept": "test"})
+
+            mock_stream.return_value = fake_stream()
+
+            response = await client.post(
+                "/api/drilldown/drilldown-session-valid",
+                json={"concept": "neural networks"},
+            )
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers.get("content-type", "")
+
+    async def test_returns_429_concurrent_stream(
+        self, client, app, sample_research_result
+    ):
+        from server.routes import _active_drilldown_streams
+
+        sessions = app.state.sessions
+        await sessions.store("drilldown-session-429", sample_research_result)
+        _active_drilldown_streams["drilldown-session-429"] = True
+        try:
+            response = await client.post(
+                "/api/drilldown/drilldown-session-429",
+                json={"concept": "neural networks"},
+            )
+            assert response.status_code == 429
+        finally:
+            _active_drilldown_streams.pop("drilldown-session-429", None)
