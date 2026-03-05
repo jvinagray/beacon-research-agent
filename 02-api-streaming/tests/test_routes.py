@@ -380,3 +380,72 @@ class TestChatEndpoint:
             assert response.status_code == 429
         finally:
             _active_chat_streams.pop("chat-session-429", None)
+
+
+# ---------------------------------------------------------------------------
+# POST /api/rewrite/{session_id}
+# ---------------------------------------------------------------------------
+
+
+class TestRewriteEndpoint:
+    async def test_returns_404_unknown_session(self, client):
+        response = await client.post(
+            "/api/rewrite/nonexistent-session-id",
+            json={"level": 1},
+        )
+        assert response.status_code == 404
+
+    async def test_returns_422_for_level_out_of_range(
+        self, client, app, sample_research_result
+    ):
+        sessions = app.state.sessions
+        await sessions.store("rewrite-session-422", sample_research_result)
+
+        response_low = await client.post(
+            "/api/rewrite/rewrite-session-422",
+            json={"level": 0},
+        )
+        assert response_low.status_code == 422
+
+        response_high = await client.post(
+            "/api/rewrite/rewrite-session-422",
+            json={"level": 6},
+        )
+        assert response_high.status_code == 422
+
+    async def test_returns_429_concurrent_stream(
+        self, client, app, sample_research_result
+    ):
+        from server.routes import _active_rewrite_streams
+
+        sessions = app.state.sessions
+        await sessions.store("rewrite-session-429", sample_research_result)
+        _active_rewrite_streams["rewrite-session-429"] = True
+        try:
+            response = await client.post(
+                "/api/rewrite/rewrite-session-429",
+                json={"level": 1},
+            )
+            assert response.status_code == 429
+        finally:
+            _active_rewrite_streams.pop("rewrite-session-429", None)
+
+    async def test_returns_200_sse_for_valid_session(
+        self, client, app, sample_research_result
+    ):
+        sessions = app.state.sessions
+        await sessions.store("rewrite-session-valid", sample_research_result)
+
+        with patch("server.routes.stream_rewrite") as mock_stream:
+
+            async def fake_stream(*args, **kwargs):
+                yield json.dumps({"type": "done", "level": 1})
+
+            mock_stream.return_value = fake_stream()
+
+            response = await client.post(
+                "/api/rewrite/rewrite-session-valid",
+                json={"level": 1},
+            )
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers.get("content-type", "")
