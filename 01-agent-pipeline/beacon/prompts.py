@@ -124,6 +124,43 @@ Do NOT wrap your response in markdown code fences. No ``` or ```json wrappers.
 Respond with ONLY the JSON array."""
 
 
+GENERATE_CONFLICTS_PROMPT = """\
+You are a critical research analyst. Based on the sources provided below, identify 2-5 disagreements or contradictions between the sources.
+
+Output a JSON array of objects, each with these fields:
+- topic (string): The topic or claim where sources disagree
+- source_a (object): {{"title": "source title", "claim": "what this source claims"}}
+- source_b (object): {{"title": "source title", "claim": "what this source claims"}}
+- assessment (string): Brief analysis of why sources disagree and which may be more reliable
+
+If there are no meaningful conflicts or disagreements between sources, return an empty array [].
+
+Do NOT wrap your response in markdown code fences. No ``` or ```json wrappers.
+
+{context}
+
+Respond with ONLY the JSON array."""
+
+GENERATE_ASSUMPTIONS_PROMPT = """\
+You are an analytical thinker specializing in identifying hidden premises. Based on the sources provided below, identify 3-5 hidden assumptions that underpin the claims and conclusions.
+
+Output a JSON array of objects, each with these fields:
+- assumption (string): The hidden assumption being made
+- why_it_matters (string): Why this assumption matters and what happens if it's wrong
+- sources_relying (array of strings): Titles of sources that rely on this assumption
+- risk_level (string): One of "high", "medium", or "low" — how risky it is if this assumption is wrong
+
+Focus on assumptions that could invalidate key conclusions if they turn out to be false.
+
+If there are no notable hidden assumptions, return an empty array [].
+
+Do NOT wrap your response in markdown code fences. No ``` or ```json wrappers.
+
+{context}
+
+Respond with ONLY the JSON array."""
+
+
 def build_evaluate_prompt(topic: str, url: str, title: str, snippet: str) -> str:
     """Build a fully formatted evaluation prompt for a single source.
 

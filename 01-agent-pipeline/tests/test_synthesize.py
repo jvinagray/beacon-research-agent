@@ -43,10 +43,10 @@ def _mock_claude_text_response(text: str) -> MagicMock:
     return response
 
 
-class TestSynthesizeMakesFourParallelCalls:
+class TestSynthesizeMakesSixParallelCalls:
     @pytest.mark.asyncio
-    async def test_four_parallel_claude_calls(self, sources):
-        """synthesize() must make exactly 4 Claude API calls (summary, concept_map, flashcards, timeline)."""
+    async def test_six_parallel_claude_calls(self, sources):
+        """synthesize() must make exactly 6 Claude API calls (summary, concept_map, flashcards, timeline, conflicts, assumptions)."""
         client = AsyncMock()
         flashcards_json = json.dumps([
             {"question": "What is X?", "answer": "X is Y."},
@@ -57,10 +57,12 @@ class TestSynthesizeMakesFourParallelCalls:
             _mock_claude_text_response("# Concept Map\n\n- Topic A\n  - Subtopic B"),
             _mock_claude_text_response(flashcards_json),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "test topic", "standard", client=client)
-        assert client.messages.create.call_count == 4
+        assert client.messages.create.call_count == 6
 
 
 class TestModelSelection:
@@ -74,6 +76,8 @@ class TestModelSelection:
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         await synthesize(sources, "test topic", "standard", client=client)
@@ -92,6 +96,8 @@ class TestMaxTokens:
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         await synthesize(sources, "test topic", "standard", client=client)
@@ -108,6 +114,8 @@ class TestMaxTokens:
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         await synthesize(sources, "test topic", "standard", client=client)
@@ -124,6 +132,8 @@ class TestMaxTokens:
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         await synthesize(sources, "test topic", "standard", client=client)
@@ -140,6 +150,8 @@ class TestMaxTokens:
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         await synthesize(sources, "test topic", "standard", client=client)
@@ -158,6 +170,8 @@ class TestArtifactOutputs:
             _mock_claude_text_response("# Concept Map"),
             _mock_claude_text_response(flashcards_json),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -174,6 +188,8 @@ class TestArtifactOutputs:
             _mock_claude_text_response("# Concept Map\n\n- Topic\n  - Subtopic"),
             _mock_claude_text_response(flashcards_json),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -192,6 +208,8 @@ class TestArtifactOutputs:
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -211,11 +229,13 @@ class TestResourcesArtifact:
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
         assert "resources" in result
-        assert client.messages.create.call_count == 4
+        assert client.messages.create.call_count == 6
 
     @pytest.mark.asyncio
     async def test_resources_contains_all_sources_with_signals(self, sources):
@@ -227,6 +247,8 @@ class TestResourcesArtifact:
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -258,6 +280,8 @@ class TestPartialFailure:
             _mock_claude_text_response("# Concept Map\n\nContent."),
             _mock_claude_text_response(flashcards_json),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -280,6 +304,8 @@ class TestFlashcardFenceStripping:
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(fenced),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -297,6 +323,8 @@ class TestFlashcardFenceStripping:
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(fenced),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -314,6 +342,8 @@ class TestFlashcardFenceStripping:
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(fenced),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -329,6 +359,8 @@ class TestFlashcardFenceStripping:
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(json.dumps(flashcards)),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -343,6 +375,8 @@ class TestFlashcardFenceStripping:
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response("This is not JSON at all, just garbage text."),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -421,6 +455,8 @@ class TestTimelineGeneration:
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
             _mock_claude_text_response(timeline_json),
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         result = await synthesize(sources, "topic", "standard", client=client)
@@ -429,8 +465,8 @@ class TestTimelineGeneration:
         assert len(result["timeline"]) == 1
 
     @pytest.mark.asyncio
-    async def test_synthesize_runs_timeline_in_parallel(self, sources):
-        """synthesize() runs timeline generation in parallel — 4 calls total."""
+    async def test_synthesize_runs_all_generators_in_parallel(self, sources):
+        """synthesize() runs all 6 generators in parallel — 6 calls total."""
         client = AsyncMock()
         flashcards_json = json.dumps([{"question": "Q", "answer": "A"}])
         client.messages.create = AsyncMock(side_effect=[
@@ -438,7 +474,176 @@ class TestTimelineGeneration:
             _mock_claude_text_response("Concept map"),
             _mock_claude_text_response(flashcards_json),
             _mock_claude_text_response(json.dumps([])),  # empty timeline
+            _mock_claude_text_response(json.dumps([])),  # empty conflicts
+            _mock_claude_text_response(json.dumps([])),  # empty assumptions
         ])
         from beacon.synthesize import synthesize
         await synthesize(sources, "topic", "standard", client=client)
-        assert client.messages.create.call_count == 4
+        assert client.messages.create.call_count == 6
+
+
+class TestGenerateConflicts:
+    """Tests for _generate_conflicts."""
+
+    @pytest.mark.asyncio
+    async def test_generate_conflicts_returns_list_of_conflict_dicts(self, sources):
+        """_generate_conflicts returns list of conflict dicts."""
+        client = AsyncMock()
+        conflicts = [
+            {
+                "topic": "Effectiveness of X",
+                "source_a": {"title": "Paper A", "claim": "X improves by 40%"},
+                "source_b": {"title": "Report B", "claim": "No significant improvement"},
+                "assessment": "Different methodologies explain the discrepancy",
+            }
+        ]
+        client.messages.create = AsyncMock(
+            return_value=_mock_claude_text_response(json.dumps(conflicts))
+        )
+        from beacon.synthesize import _generate_conflicts
+        result = await _generate_conflicts("test context", client)
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert result[0]["topic"] == "Effectiveness of X"
+        assert result[0]["source_a"]["title"] == "Paper A"
+
+    @pytest.mark.asyncio
+    async def test_generate_conflicts_strips_code_fences(self, sources):
+        """_generate_conflicts strips markdown code fences before JSON parsing."""
+        client = AsyncMock()
+        conflicts = [{"topic": "T", "source_a": {"title": "A", "claim": "C1"},
+                       "source_b": {"title": "B", "claim": "C2"}, "assessment": "A"}]
+        fenced = f'```json\n{json.dumps(conflicts)}\n```'
+        client.messages.create = AsyncMock(
+            return_value=_mock_claude_text_response(fenced)
+        )
+        from beacon.synthesize import _generate_conflicts
+        result = await _generate_conflicts("test context", client)
+        assert isinstance(result, list)
+        assert len(result) == 1
+
+    @pytest.mark.asyncio
+    async def test_generate_conflicts_returns_empty_on_malformed_response(self, sources):
+        """_generate_conflicts returns empty list on malformed response."""
+        client = AsyncMock()
+        client.messages.create = AsyncMock(
+            return_value=_mock_claude_text_response("No conflicts found in sources.")
+        )
+        from beacon.synthesize import _generate_conflicts
+        result = await _generate_conflicts("test context", client)
+        assert result == []
+
+
+class TestGenerateAssumptions:
+    """Tests for _generate_assumptions."""
+
+    @pytest.mark.asyncio
+    async def test_generate_assumptions_returns_list_of_assumption_dicts(self, sources):
+        """_generate_assumptions returns list of assumption dicts."""
+        client = AsyncMock()
+        assumptions = [
+            {
+                "assumption": "Hardware trends continue at same pace",
+                "why_it_matters": "Feasibility depends on continued scaling",
+                "sources_relying": ["Tech Roadmap", "Industry Analysis"],
+                "risk_level": "medium",
+            }
+        ]
+        client.messages.create = AsyncMock(
+            return_value=_mock_claude_text_response(json.dumps(assumptions))
+        )
+        from beacon.synthesize import _generate_assumptions
+        result = await _generate_assumptions("test context", client)
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert result[0]["assumption"] == "Hardware trends continue at same pace"
+        assert result[0]["risk_level"] == "medium"
+
+    @pytest.mark.asyncio
+    async def test_generate_assumptions_strips_code_fences(self, sources):
+        """_generate_assumptions strips markdown code fences before JSON parsing."""
+        client = AsyncMock()
+        assumptions = [{"assumption": "A", "why_it_matters": "M",
+                         "sources_relying": ["S"], "risk_level": "low"}]
+        fenced = f'```json\n{json.dumps(assumptions)}\n```'
+        client.messages.create = AsyncMock(
+            return_value=_mock_claude_text_response(fenced)
+        )
+        from beacon.synthesize import _generate_assumptions
+        result = await _generate_assumptions("test context", client)
+        assert isinstance(result, list)
+        assert len(result) == 1
+
+    @pytest.mark.asyncio
+    async def test_generate_assumptions_returns_empty_on_malformed_response(self, sources):
+        """_generate_assumptions returns empty list on malformed response."""
+        client = AsyncMock()
+        client.messages.create = AsyncMock(
+            return_value=_mock_claude_text_response("No notable assumptions detected.")
+        )
+        from beacon.synthesize import _generate_assumptions
+        result = await _generate_assumptions("test context", client)
+        assert result == []
+
+
+class TestSynthesizeIncludesConflictsAndAssumptions:
+    """Tests for conflicts and assumptions in synthesize() output."""
+
+    @pytest.mark.asyncio
+    async def test_synthesize_includes_conflicts_in_artifacts(self, sources):
+        """synthesize() includes conflicts in returned artifacts dict."""
+        client = AsyncMock()
+        flashcards_json = json.dumps([{"question": "Q", "answer": "A"}])
+        conflicts_json = json.dumps([{"topic": "T", "source_a": {"title": "A", "claim": "C1"},
+                                       "source_b": {"title": "B", "claim": "C2"}, "assessment": "A"}])
+        client.messages.create = AsyncMock(side_effect=[
+            _mock_claude_text_response("Summary"),
+            _mock_claude_text_response("Concept map"),
+            _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # timeline
+            _mock_claude_text_response(conflicts_json),
+            _mock_claude_text_response(json.dumps([])),  # assumptions
+        ])
+        from beacon.synthesize import synthesize
+        result = await synthesize(sources, "topic", "standard", client=client)
+        assert "conflicts" in result
+        assert isinstance(result["conflicts"], list)
+        assert len(result["conflicts"]) == 1
+
+    @pytest.mark.asyncio
+    async def test_synthesize_includes_assumptions_in_artifacts(self, sources):
+        """synthesize() includes assumptions in returned artifacts dict."""
+        client = AsyncMock()
+        flashcards_json = json.dumps([{"question": "Q", "answer": "A"}])
+        assumptions_json = json.dumps([{"assumption": "A", "why_it_matters": "M",
+                                         "sources_relying": ["S"], "risk_level": "high"}])
+        client.messages.create = AsyncMock(side_effect=[
+            _mock_claude_text_response("Summary"),
+            _mock_claude_text_response("Concept map"),
+            _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # timeline
+            _mock_claude_text_response(json.dumps([])),  # conflicts
+            _mock_claude_text_response(assumptions_json),
+        ])
+        from beacon.synthesize import synthesize
+        result = await synthesize(sources, "topic", "standard", client=client)
+        assert "assumptions" in result
+        assert isinstance(result["assumptions"], list)
+        assert len(result["assumptions"]) == 1
+
+    @pytest.mark.asyncio
+    async def test_synthesize_runs_six_generators_in_parallel(self, sources):
+        """synthesize() runs all 6 generators in parallel (call_count == 6)."""
+        client = AsyncMock()
+        flashcards_json = json.dumps([{"question": "Q", "answer": "A"}])
+        client.messages.create = AsyncMock(side_effect=[
+            _mock_claude_text_response("Summary"),
+            _mock_claude_text_response("Concept map"),
+            _mock_claude_text_response(flashcards_json),
+            _mock_claude_text_response(json.dumps([])),  # timeline
+            _mock_claude_text_response(json.dumps([])),  # conflicts
+            _mock_claude_text_response(json.dumps([])),  # assumptions
+        ])
+        from beacon.synthesize import synthesize
+        await synthesize(sources, "topic", "standard", client=client)
+        assert client.messages.create.call_count == 6
