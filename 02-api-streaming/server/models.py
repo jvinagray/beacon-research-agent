@@ -18,6 +18,12 @@ class ChatRequest(BaseModel):
     history: list[ChatMessage] = Field(default=[], max_length=40)
 
 
+class RewriteRequest(BaseModel):
+    """POST /api/rewrite/{session_id} request body."""
+
+    level: int = Field(..., ge=1, le=5)
+
+
 class ResearchRequest(BaseModel):
     """POST /api/research request body."""
 
