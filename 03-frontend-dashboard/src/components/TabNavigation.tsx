@@ -1,12 +1,13 @@
 import { cn } from "@/lib/utils";
 
-export type TabId = "sources" | "summary" | "concept-map" | "flashcards";
+export type TabId = "sources" | "summary" | "concept-map" | "flashcards" | "chat";
 
 const tabs: { id: TabId; label: string }[] = [
   { id: "sources", label: "Sources" },
   { id: "summary", label: "Summary" },
   { id: "concept-map", label: "Concept Map" },
   { id: "flashcards", label: "Flashcards" },
+  { id: "chat", label: "Chat" },
 ];
 
 interface TabNavigationProps {

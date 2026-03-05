@@ -7,6 +7,8 @@ import SourceCard from "@/components/SourceCard";
 import MarkdownViewer from "@/components/MarkdownViewer";
 import ConceptMap from "@/components/ConceptMap";
 import FlashCard from "@/components/FlashCard";
+import ChatPanel from "@/components/ChatPanel";
+import { useChat } from "@/hooks/useChat";
 import type { PreparedRouterState } from "@/lib/prepareRouterState";
 import type { Flashcard } from "@/types/research";
 import { API_BASE_URL } from "@/config";
@@ -63,6 +65,8 @@ const DashboardPage = () => {
       toast.error("Export failed. Check your connection and try again.");
     }
   }, [researchState]);
+
+  const chatState = useChat(researchState?.sessionId ?? null);
 
   if (!researchState) return null;
 
@@ -156,6 +160,18 @@ const DashboardPage = () => {
             );
           })()}
         </div>
+
+        {/* Chat outside the keyed div — state persists across tab switches */}
+        {activeTab === "chat" && (
+          <ChatPanel
+            sessionId={researchState.sessionId}
+            topic={researchState.topic}
+            messages={chatState.messages}
+            isStreaming={chatState.isStreaming}
+            error={chatState.error}
+            sendMessage={chatState.sendMessage}
+          />
+        )}
       </main>
     </div>
   );
