@@ -112,21 +112,29 @@ const ConceptMap = ({ data }: ConceptMapProps) => {
   }, []);
 
   const renderNode = useCallback(
-    ({ nodeDatum }: { nodeDatum: { name: string } }) => (
-      <g>
-        <circle r={18} style={nodeStyle.circle} />
-        <text
-          fill={nodeStyle.name.fill}
-          fontSize={nodeStyle.name.fontSize}
-          fontWeight={nodeStyle.name.fontWeight}
-          strokeWidth={0}
-          x={24}
-          dy="0.35em"
-        >
-          {nodeDatum.name}
-        </text>
-      </g>
-    ),
+    ({ nodeDatum }: { nodeDatum: { name: string } }) => {
+      // Truncate long labels
+      const label =
+        nodeDatum.name.length > 30
+          ? nodeDatum.name.slice(0, 28) + "…"
+          : nodeDatum.name;
+      return (
+        <g>
+          <circle r={14} style={nodeStyle.circle} />
+          <title>{nodeDatum.name}</title>
+          <text
+            fill={nodeStyle.name.fill}
+            fontSize="0.75rem"
+            fontWeight={nodeStyle.name.fontWeight}
+            strokeWidth={0}
+            x={20}
+            dy="0.35em"
+          >
+            {label}
+          </text>
+        </g>
+      );
+    },
     [],
   );
 
@@ -171,7 +179,9 @@ const ConceptMap = ({ data }: ConceptMapProps) => {
         pathFunc="step"
         translate={translate}
         collapsible
-        zoom={0.8}
+        zoom={0.65}
+        nodeSize={{ x: 250, y: 100 }}
+        separation={{ siblings: 1.2, nonSiblings: 1.5 }}
         renderCustomNodeElement={renderNode}
         pathClassFunc={() => "concept-map-link"}
       />

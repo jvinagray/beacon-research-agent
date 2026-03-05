@@ -11,6 +11,7 @@ export function connectSSE(params: {
 }): void {
   const { topic, depth, signal, onEvent, onError } = params;
   let errorHandled = false;
+  let completed = false;
 
   fetchEventSource(`${API_BASE_URL}/api/research`, {
     method: 'POST',
@@ -28,11 +29,15 @@ export function connectSSE(params: {
     },
 
     onmessage(event) {
+      if (!event.data) return;
       try {
         const parsed = JSON.parse(event.data) as SSEEvent;
+        if (parsed.type === 'complete') {
+          completed = true;
+        }
         onEvent(parsed);
-      } catch (err) {
-        onError(err instanceof Error ? err : new Error('Failed to parse SSE message'));
+      } catch {
+        // Ignore non-JSON messages (e.g. SSE pings)
       }
     },
 
@@ -50,7 +55,9 @@ export function connectSSE(params: {
     },
 
     onclose() {
-      throw new Error('Connection closed unexpectedly');
+      if (!completed) {
+        throw new Error('Connection closed unexpectedly');
+      }
     },
   }).catch((err) => {
     if (!errorHandled) {
