@@ -173,3 +173,62 @@ describe("MarkdownViewer citation badges", () => {
     expect(sups.length).toBe(0);
   });
 });
+
+describe("MarkdownViewer drill:// links", () => {
+  it("drill:// links render as styled buttons", () => {
+    const onDrillDown = vi.fn();
+    const { container } = render(
+      <MarkdownViewer
+        content="Learn about [transformers](drill://transformers) here."
+        onDrillDown={onDrillDown}
+      />
+    );
+
+    const button = container.querySelector("button");
+    expect(button).toBeInTheDocument();
+    expect(button?.className).toMatch(/border-dotted/);
+  });
+
+  it("clicking drill:// link calls onDrillDown with concept text", () => {
+    const onDrillDown = vi.fn();
+    const { container } = render(
+      <MarkdownViewer
+        content="Learn about [backpropagation](drill://backpropagation) here."
+        onDrillDown={onDrillDown}
+      />
+    );
+
+    const button = container.querySelector("button");
+    button?.click();
+
+    expect(onDrillDown).toHaveBeenCalledWith("backpropagation");
+  });
+
+  it("drill:// link extracts plain text after drill://", () => {
+    const onDrillDown = vi.fn();
+    const { container } = render(
+      <MarkdownViewer
+        content="About [gradient-descent](drill://gradient-descent) info."
+        onDrillDown={onDrillDown}
+      />
+    );
+
+    const button = container.querySelector("button");
+    button?.click();
+
+    expect(onDrillDown).toHaveBeenCalledWith("gradient-descent");
+  });
+
+  it("without onDrillDown prop renders drill:// as plain text", () => {
+    const { container } = render(
+      <MarkdownViewer
+        content="About [regularization](drill://regularization) info."
+      />
+    );
+
+    // Should render as plain text span, not a button
+    const buttons = container.querySelectorAll("button");
+    expect(buttons.length).toBe(0);
+    expect(screen.getByText("regularization")).toBeInTheDocument();
+  });
+});

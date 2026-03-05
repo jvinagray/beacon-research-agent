@@ -8,6 +8,7 @@ import {
   HoverCardTrigger,
   HoverCardContent,
 } from "@/components/ui/hover-card";
+import { Search } from "lucide-react";
 
 interface MarkdownViewerProps {
   content: string;
@@ -79,17 +80,18 @@ const MarkdownViewer = ({ content, sources, onDrillDown }: MarkdownViewerProps) 
           return <span>{children}</span>;
         }
 
-        // Drill-down link stub (completed in section-06)
+        // Drill-down link
         if (href?.startsWith("drill://")) {
           if (onDrillDown) {
             const concept = href.slice(8);
             return (
               <button
                 type="button"
-                className="text-primary border-b border-dotted border-primary cursor-pointer bg-transparent p-0 font-inherit text-inherit"
-                onClick={() => onDrillDown(decodeURIComponent(concept))}
+                className="text-primary cursor-pointer border-b border-dotted border-primary/50 hover:border-primary transition-colors inline-flex items-center gap-1 bg-transparent p-0 font-inherit text-inherit"
+                onClick={() => onDrillDown(concept)}
               >
                 {children}
+                <Search size={12} />
               </button>
             );
           }
