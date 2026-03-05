@@ -61,6 +61,20 @@ export interface TimelineEvent {
   significance: 'high' | 'medium' | 'low';
 }
 
+export interface Conflict {
+  topic: string;
+  source_a: { title: string; claim: string };
+  source_b: { title: string; claim: string };
+  assessment: string;
+}
+
+export interface Assumption {
+  assumption: string;
+  why_it_matters: string;
+  sources_relying: string[];
+  risk_level: 'high' | 'medium' | 'low';
+}
+
 /** Backend sends flashcards as a JSON-encoded string; the artifact normalizer parses into Flashcard[]. */
 export interface Flashcard {
   question: string;

@@ -42,6 +42,17 @@ describe("TabNavigation", () => {
     expect(screen.queryByRole("button", { name: /timeline/i })).not.toBeInTheDocument();
   });
 
+  it("renders Analysis tab when included in visibleTabs", () => {
+    render(
+      <TabNavigation
+        active="sources"
+        onChange={vi.fn()}
+        visibleTabs={["sources", "analysis", "chat"]}
+      />
+    );
+    expect(screen.getByRole("button", { name: /analysis/i })).toBeInTheDocument();
+  });
+
   it("accepts visibleTabs prop to control which tabs display", () => {
     render(
       <TabNavigation
