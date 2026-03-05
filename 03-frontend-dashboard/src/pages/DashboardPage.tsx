@@ -109,7 +109,7 @@ const DashboardPage = () => {
           {activeTab === "summary" && (
             <div data-testid="summary-placeholder">
               {researchState.artifacts.summary ? (
-                <MarkdownViewer content={researchState.artifacts.summary as string} />
+                <MarkdownViewer content={researchState.artifacts.summary as string} sources={researchState.sources} />
               ) : (
                 <p className="text-slate-400 text-center py-8">
                   No summary was generated for this research.
@@ -131,7 +131,11 @@ const DashboardPage = () => {
           )}
 
           {activeTab === "flashcards" && (() => {
-            const rawFlashcards = researchState.artifacts?.flashcards;
+            let rawFlashcards = researchState.artifacts?.flashcards;
+            // Defensive: if stored as a JSON string, try parsing it
+            if (typeof rawFlashcards === 'string') {
+              try { rawFlashcards = JSON.parse(rawFlashcards); } catch { /* keep as-is */ }
+            }
             const flashcards: Flashcard[] = Array.isArray(rawFlashcards) ? rawFlashcards : [];
             return (
               <div>
