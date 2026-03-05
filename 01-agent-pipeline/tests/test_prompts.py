@@ -28,6 +28,10 @@ class TestPromptConstants:
     def test_flashcards_prompt_is_nonempty(self):
         assert len(GENERATE_FLASHCARDS_PROMPT) > 0
 
+    def test_summary_prompt_includes_citation_instructions(self):
+        """GENERATE_SUMMARY_PROMPT must instruct the LLM to use cite:N format."""
+        assert "cite:" in GENERATE_SUMMARY_PROMPT
+
 
 class TestPromptFunctions:
     def test_build_evaluate_prompt_includes_source_data(self):

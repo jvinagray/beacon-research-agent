@@ -41,6 +41,10 @@ You are a research synthesizer. Based on the sources provided below, write an ex
 2. Highlights areas of consensus and any disagreements between sources
 3. Uses clear markdown headings to organize the summary
 4. Is 1-2 pages of well-structured markdown
+5. Includes inline citations for every factual claim using the format [Source Title](cite:N) where N is the 1-indexed source number (matching the order sources appear above)
+6. Every paragraph must have at least one citation
+7. Multiple citations can be placed together when a claim is supported by multiple sources: [Title A](cite:1)[Title B](cite:3)
+8. Use the exact source titles as they appear in the source headings above
 
 Focus on the most important findings and practical takeaways. Write for someone who wants to quickly understand the current state of knowledge on this topic.
 
