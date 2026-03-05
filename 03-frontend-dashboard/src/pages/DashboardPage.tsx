@@ -10,11 +10,13 @@ import FlashCard from "@/components/FlashCard";
 import ChatPanel from "@/components/ChatPanel";
 import ComplexitySlider from "@/components/ComplexitySlider";
 import DrillDownPanel from "@/components/DrillDownPanel";
+import Timeline from "@/components/Timeline";
 import { useChat } from "@/hooks/useChat";
 import { useRewrite } from "@/hooks/useRewrite";
 import { useDrillDown } from "@/hooks/useDrillDown";
+import { normalizeArtifact } from "@/lib/artifacts";
 import type { PreparedRouterState } from "@/lib/prepareRouterState";
-import type { Flashcard } from "@/types/research";
+import type { Flashcard, TimelineEvent } from "@/types/research";
 import { API_BASE_URL } from "@/config";
 
 const DashboardPage = () => {
@@ -41,6 +43,27 @@ const DashboardPage = () => {
     );
     return [...sorted, ...failed];
   }, [researchState]);
+
+  const timelineEvents = useMemo(() => {
+    const raw = researchState?.artifacts?.timeline;
+    if (!raw) return [];
+    const parsed = normalizeArtifact("timeline", raw as string);
+    return Array.isArray(parsed) ? (parsed as TimelineEvent[]) : [];
+  }, [researchState?.artifacts?.timeline]);
+
+  const visibleTabs = useMemo((): TabId[] => {
+    const base: TabId[] = ["sources", "summary", "concept-map", "flashcards"];
+    if (timelineEvents.length > 0) base.push("timeline");
+    // "analysis" added by Section 10
+    base.push("chat");
+    return base;
+  }, [timelineEvents]);
+
+  useEffect(() => {
+    if (!visibleTabs.includes(activeTab)) {
+      setActiveTab("sources");
+    }
+  }, [visibleTabs, activeTab]);
 
   const handleExport = useCallback(async () => {
     if (!researchState?.sessionId) return;
@@ -96,7 +119,7 @@ const DashboardPage = () => {
         onExport={handleExport}
         exportDisabled={!researchState.sessionId}
       />
-      <TabNavigation active={activeTab} onChange={setActiveTab} />
+      <TabNavigation active={activeTab} onChange={setActiveTab} visibleTabs={visibleTabs} />
 
       <main className="flex-1 p-6 max-w-5xl mx-auto w-full">
         <div key={activeTab} className="animate-fade-in">
@@ -206,6 +229,8 @@ const DashboardPage = () => {
               </div>
             );
           })()}
+
+          {activeTab === "timeline" && <Timeline events={timelineEvents} />}
         </div>
 
         {/* Chat outside the keyed div — state persists across tab switches */}
