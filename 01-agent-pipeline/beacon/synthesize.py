@@ -60,7 +60,14 @@ async def _generate_flashcards(context: str, client: AsyncAnthropic) -> list[Fla
         ),
         timeout=SYNTH_TIMEOUT,
     )
-    text = response.content[0].text
+    text = response.content[0].text.strip()
+    # Strip markdown code fences if present
+    if text.startswith("```"):
+        lines = text.split("\n")
+        lines = lines[1:]  # remove opening ```json or ```
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        text = "\n".join(lines)
     try:
         items = json.loads(text)
         return [Flashcard(**item) for item in items]
