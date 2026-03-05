@@ -9,8 +9,10 @@ import ConceptMap from "@/components/ConceptMap";
 import FlashCard from "@/components/FlashCard";
 import ChatPanel from "@/components/ChatPanel";
 import ComplexitySlider from "@/components/ComplexitySlider";
+import DrillDownPanel from "@/components/DrillDownPanel";
 import { useChat } from "@/hooks/useChat";
 import { useRewrite } from "@/hooks/useRewrite";
+import { useDrillDown } from "@/hooks/useDrillDown";
 import type { PreparedRouterState } from "@/lib/prepareRouterState";
 import type { Flashcard } from "@/types/research";
 import { API_BASE_URL } from "@/config";
@@ -73,6 +75,17 @@ const DashboardPage = () => {
 
   const chatState = useChat(researchState?.sessionId ?? null);
 
+  const drillDown = useDrillDown(researchState?.sessionId ?? null);
+
+  const handleDrillDown = useCallback((concept: string, parentId?: string) => {
+    const status = drillDown.startDrillDown(concept, parentId);
+    if (status === "max-depth") {
+      toast.info("Maximum depth reached. Use the chat to explore further.");
+    } else if (status === "max-sessions") {
+      toast.info("Too many drill-downs. Use the chat to explore further.");
+    }
+  }, [drillDown.startDrillDown]);
+
   if (!researchState) return null;
 
   return (
@@ -124,11 +137,21 @@ const DashboardPage = () => {
                     <MarkdownViewer
                       content={rewriteState.content || originalSummary}
                       sources={researchState.sources}
+                      onDrillDown={handleDrillDown}
                     />
                     {rewriteState.isStreaming && (
                       <span className="inline-block w-0.5 h-5 bg-primary animate-pulse ml-0.5" />
                     )}
                   </div>
+                  {drillDown.sessions.length > 0 && (
+                    <div className="mt-6">
+                      <DrillDownPanel
+                        sessions={drillDown.sessions}
+                        sources={researchState.sources}
+                        onDrillDown={handleDrillDown}
+                      />
+                    </div>
+                  )}
                 </>
               ) : (
                 <p className="text-slate-400 text-center py-8">
