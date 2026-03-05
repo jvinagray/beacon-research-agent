@@ -48,6 +48,8 @@ You are a research synthesizer. Based on the sources provided below, write an ex
 
 Focus on the most important findings and practical takeaways. Write for someone who wants to quickly understand the current state of knowledge on this topic.
 
+For 5-8 key concepts or claims that a reader might want to explore further, make the concept text a link with the format [concept text](drill://concept text). Choose technical terms, debatable claims, or topics with significant depth. Do not URL-encode the concept -- use plain text after drill://.
+
 {context}
 
 Write the executive summary now."""
