@@ -32,6 +32,14 @@ const DashboardPage = () => {
       navigate("/search", {
         state: { message: "Your previous research session has expired." },
       });
+    } else {
+      const artKeys = Object.keys(researchState.artifacts);
+      const artSummary = artKeys.map(k => {
+        const v = researchState.artifacts[k];
+        const info = Array.isArray(v) ? `[${v.length} items]` : typeof v === 'string' ? `string(${v.length})` : typeof v;
+        return `${k}: ${info}`;
+      });
+      console.log(`[Beacon Dashboard] artifacts loaded:`, artSummary);
     }
   }, [researchState, navigate]);
 

@@ -586,6 +586,52 @@ class TestGenerateAssumptions:
         assert result == []
 
 
+class TestExtractJsonArray:
+    """Tests for _extract_json_array — robust JSON extraction from Claude prose."""
+
+    def test_bare_json_array(self):
+        from beacon.synthesize import _extract_json_array
+        result = _extract_json_array('[{"q": "Q", "a": "A"}]')
+        assert result == [{"q": "Q", "a": "A"}]
+
+    def test_code_fenced_json(self):
+        from beacon.synthesize import _extract_json_array
+        text = '```json\n[{"q": "Q"}]\n```'
+        assert _extract_json_array(text) == [{"q": "Q"}]
+
+    def test_json_embedded_in_prose(self):
+        from beacon.synthesize import _extract_json_array
+        text = 'Here are the flashcards:\n\n[{"q": "Q", "a": "A"}]'
+        assert _extract_json_array(text) == [{"q": "Q", "a": "A"}]
+
+    def test_prose_with_stray_brackets_before_json(self):
+        """Key bug: prose containing [brackets] before the actual JSON array."""
+        from beacon.synthesize import _extract_json_array
+        text = 'Based on [5 sources], here are the results:\n\n[{"q": "Q", "a": "A"}]'
+        result = _extract_json_array(text)
+        assert result is not None
+        assert len(result) == 1
+        assert result[0]["q"] == "Q"
+
+    def test_fenced_json_with_surrounding_prose(self):
+        from beacon.synthesize import _extract_json_array
+        text = 'Here are the items:\n\n```json\n[{"x": 1}]\n```\n\nEnjoy!'
+        result = _extract_json_array(text)
+        assert result == [{"x": 1}]
+
+    def test_returns_none_for_no_json(self):
+        from beacon.synthesize import _extract_json_array
+        assert _extract_json_array("No data available.") is None
+
+    def test_returns_none_for_non_list_json(self):
+        from beacon.synthesize import _extract_json_array
+        assert _extract_json_array('{"key": "value"}') is None
+
+    def test_empty_array(self):
+        from beacon.synthesize import _extract_json_array
+        assert _extract_json_array('[]') == []
+
+
 class TestSynthesizeIncludesConflictsAndAssumptions:
     """Tests for conflicts and assumptions in synthesize() output."""
 

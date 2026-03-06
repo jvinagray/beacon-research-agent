@@ -34,7 +34,7 @@ const ProgressFeed = ({ status, statusMessage, sources, sourceTotal }: ProgressF
 
       {isActive && sourceTotal > 0 && (
         <p className="text-xs text-muted-foreground mb-4">
-          Evaluating source {sources.length} of {sourceTotal}
+          Evaluating source {Math.min(sources.length, sourceTotal)} of {sourceTotal}
         </p>
       )}
 

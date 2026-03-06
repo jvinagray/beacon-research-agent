@@ -19,7 +19,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-beacon-pipeline = { path = "../01-agent-pipeline" }
+beacon-pipeline = { path = "../01-agent-pipeline", editable = true }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
