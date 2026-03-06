@@ -87,7 +87,10 @@
       "Bash(curl:*)",
       "Bash(if not exist \"C:\\\\git_repos\\\\playground\\\\hackathon\\\\03-frontend-dashboard\\\\planning\\\\reviews\" mkdir \"C:\\\\git_repos\\\\playground\\\\hackathon\\\\03-frontend-dashboard\\\\planning\\\\reviews\")",
       "Bash(done)",
-      "Bash(python -c:*)"
+      "Bash(python -c:*)",
+      "Bash(git stash pop:*)",
+      "Bash(git stash drop:*)",
+      "Bash(git rm:*)"
     ]
   }
 }
