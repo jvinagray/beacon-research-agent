@@ -4,3 +4,17 @@ __pycache__/
 .pytest_cache/
 nul
 .env
+
+# Planning artifacts (deep-plan / deep-implement)
+claude-*.md
+deep_plan_config.json
+deep_project_interview.md
+**/sections/
+**/implementation/
+**/reviews/
+**/planning/
+spec.md
+**/spec.md
+project-manifest.md
+BEACON_SPEC.md
+beacon-wow-features-plan.md
