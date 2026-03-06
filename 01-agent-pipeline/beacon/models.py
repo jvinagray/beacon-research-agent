@@ -74,7 +74,7 @@ class SourceEvaluatedEvent(BaseModel):
 class ArtifactEvent(BaseModel):
     """Emitted when a synthesis artifact is generated."""
     type: Literal["artifact"] = "artifact"
-    artifact_type: Literal["summary", "concept_map", "flashcards", "resources"]
+    artifact_type: Literal["summary", "concept_map", "flashcards", "resources", "timeline", "conflicts", "assumptions"]
     data: str | list[Flashcard]
 
 

@@ -1,5 +1,6 @@
-"""Tests for server routes: health, research SSE, and export endpoints."""
+"""Tests for server routes: health, research SSE, export, and chat endpoints."""
 import json
+from unittest.mock import patch
 
 
 def parse_sse_events(raw_bytes: bytes) -> list[dict]:
@@ -289,3 +290,265 @@ class TestConcurrencyControl:
             semaphore.release()
 
         assert acquired == 3
+
+
+# ---------------------------------------------------------------------------
+# POST /api/chat/{session_id}
+# ---------------------------------------------------------------------------
+
+
+class TestChatEndpoint:
+    async def test_returns_404_unknown_session(self, client):
+        response = await client.post(
+            "/api/chat/nonexistent-session-id",
+            json={"message": "Hello"},
+        )
+        assert response.status_code == 404
+
+    async def test_returns_404_expired_session(
+        self, client, app, sample_research_result
+    ):
+        from datetime import datetime, timedelta, timezone
+
+        sessions = app.state.sessions
+        await sessions.store("expired-chat-session", sample_research_result)
+        sessions._timestamps["expired-chat-session"] = datetime.now(
+            timezone.utc
+        ) - timedelta(hours=2)
+        response = await client.post(
+            "/api/chat/expired-chat-session",
+            json={"message": "Hello"},
+        )
+        assert response.status_code == 404
+
+    async def test_returns_200_sse_for_valid_session(
+        self, client, app, sample_research_result
+    ):
+        sessions = app.state.sessions
+        await sessions.store("chat-session-valid", sample_research_result)
+
+        with patch("server.routes.stream_chat_response") as mock_stream:
+
+            async def fake_stream(*args, **kwargs):
+                yield json.dumps({"type": "done", "sources": []})
+
+            mock_stream.return_value = fake_stream()
+
+            response = await client.post(
+                "/api/chat/chat-session-valid",
+                json={"message": "Tell me about async"},
+            )
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers.get("content-type", "")
+
+    async def test_validates_message_max_length(
+        self, client, app, sample_research_result
+    ):
+        sessions = app.state.sessions
+        await sessions.store("chat-session-len", sample_research_result)
+        response = await client.post(
+            "/api/chat/chat-session-len",
+            json={"message": "x" * 4001},
+        )
+        assert response.status_code == 422
+
+    async def test_validates_history_max_length(
+        self, client, app, sample_research_result
+    ):
+        sessions = app.state.sessions
+        await sessions.store("chat-session-hist", sample_research_result)
+        history = [{"role": "user", "content": f"msg {i}"} for i in range(41)]
+        response = await client.post(
+            "/api/chat/chat-session-hist",
+            json={"message": "Hello", "history": history},
+        )
+        assert response.status_code == 422
+
+    async def test_returns_429_concurrent_stream(
+        self, client, app, sample_research_result
+    ):
+        from server.routes import _active_chat_streams
+
+        sessions = app.state.sessions
+        await sessions.store("chat-session-429", sample_research_result)
+        _active_chat_streams["chat-session-429"] = True
+        try:
+            response = await client.post(
+                "/api/chat/chat-session-429",
+                json={"message": "Hello"},
+            )
+            assert response.status_code == 429
+        finally:
+            _active_chat_streams.pop("chat-session-429", None)
+
+
+# ---------------------------------------------------------------------------
+# POST /api/rewrite/{session_id}
+# ---------------------------------------------------------------------------
+
+
+class TestRewriteEndpoint:
+    async def test_returns_404_unknown_session(self, client):
+        response = await client.post(
+            "/api/rewrite/nonexistent-session-id",
+            json={"level": 1},
+        )
+        assert response.status_code == 404
+
+    async def test_returns_422_for_level_out_of_range(
+        self, client, app, sample_research_result
+    ):
+        sessions = app.state.sessions
+        await sessions.store("rewrite-session-422", sample_research_result)
+
+        response_low = await client.post(
+            "/api/rewrite/rewrite-session-422",
+            json={"level": 0},
+        )
+        assert response_low.status_code == 422
+
+        response_high = await client.post(
+            "/api/rewrite/rewrite-session-422",
+            json={"level": 6},
+        )
+        assert response_high.status_code == 422
+
+    async def test_returns_429_concurrent_stream(
+        self, client, app, sample_research_result
+    ):
+        from server.routes import _active_rewrite_streams
+
+        sessions = app.state.sessions
+        await sessions.store("rewrite-session-429", sample_research_result)
+        _active_rewrite_streams["rewrite-session-429"] = True
+        try:
+            response = await client.post(
+                "/api/rewrite/rewrite-session-429",
+                json={"level": 1},
+            )
+            assert response.status_code == 429
+        finally:
+            _active_rewrite_streams.pop("rewrite-session-429", None)
+
+    async def test_returns_200_sse_for_valid_session(
+        self, client, app, sample_research_result
+    ):
+        sessions = app.state.sessions
+        await sessions.store("rewrite-session-valid", sample_research_result)
+
+        with patch("server.routes.stream_rewrite") as mock_stream:
+
+            async def fake_stream(*args, **kwargs):
+                yield json.dumps({"type": "done", "level": 1})
+
+            mock_stream.return_value = fake_stream()
+
+            response = await client.post(
+                "/api/rewrite/rewrite-session-valid",
+                json={"level": 1},
+            )
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers.get("content-type", "")
+
+
+# ---------------------------------------------------------------------------
+# POST /api/drilldown/{session_id}
+# ---------------------------------------------------------------------------
+
+
+class TestDrilldownEndpoint:
+    async def test_returns_404_unknown_session(self, client):
+        response = await client.post(
+            "/api/drilldown/nonexistent-session-id",
+            json={"concept": "neural networks"},
+        )
+        assert response.status_code == 404
+
+    async def test_returns_404_expired_session(
+        self, client, app, sample_research_result
+    ):
+        from datetime import datetime, timedelta, timezone
+
+        sessions = app.state.sessions
+        await sessions.store("drilldown-expired", sample_research_result)
+        sessions._timestamps["drilldown-expired"] = datetime.now(
+            timezone.utc
+        ) - timedelta(hours=2)
+        response = await client.post(
+            "/api/drilldown/drilldown-expired",
+            json={"concept": "test"},
+        )
+        assert response.status_code == 404
+
+    async def test_returns_422_for_whitespace_only_concept(
+        self, client, app, sample_research_result
+    ):
+        sessions = app.state.sessions
+        await sessions.store("drilldown-session-ws", sample_research_result)
+
+        response = await client.post(
+            "/api/drilldown/drilldown-session-ws",
+            json={"concept": "   "},
+        )
+        assert response.status_code == 422
+
+    async def test_returns_422_for_empty_concept(
+        self, client, app, sample_research_result
+    ):
+        sessions = app.state.sessions
+        await sessions.store("drilldown-session-empty", sample_research_result)
+
+        response = await client.post(
+            "/api/drilldown/drilldown-session-empty",
+            json={"concept": ""},
+        )
+        assert response.status_code == 422
+
+    async def test_returns_422_for_concept_over_500_chars(
+        self, client, app, sample_research_result
+    ):
+        sessions = app.state.sessions
+        await sessions.store("drilldown-session-long", sample_research_result)
+
+        response = await client.post(
+            "/api/drilldown/drilldown-session-long",
+            json={"concept": "x" * 501},
+        )
+        assert response.status_code == 422
+
+    async def test_returns_200_sse_for_valid_session(
+        self, client, app, sample_research_result
+    ):
+        sessions = app.state.sessions
+        await sessions.store("drilldown-session-valid", sample_research_result)
+
+        with patch("server.routes.stream_drilldown") as mock_stream:
+
+            async def fake_stream(*args, **kwargs):
+                yield json.dumps({"type": "done", "concept": "test"})
+
+            mock_stream.return_value = fake_stream()
+
+            response = await client.post(
+                "/api/drilldown/drilldown-session-valid",
+                json={"concept": "neural networks"},
+            )
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers.get("content-type", "")
+
+    async def test_returns_429_concurrent_stream(
+        self, client, app, sample_research_result
+    ):
+        from server.routes import _active_drilldown_streams
+
+        sessions = app.state.sessions
+        await sessions.store("drilldown-session-429", sample_research_result)
+        _active_drilldown_streams["drilldown-session-429"] = True
+        try:
+            response = await client.post(
+                "/api/drilldown/drilldown-session-429",
+                json={"concept": "neural networks"},
+            )
+            assert response.status_code == 429
+        finally:
+            _active_drilldown_streams.pop("drilldown-session-429", None)

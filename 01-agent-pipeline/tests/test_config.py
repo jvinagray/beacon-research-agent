@@ -29,14 +29,16 @@ class TestConfigLoading:
 
     def test_config_raises_on_missing_anthropic_key(self):
         """Config must raise ValueError when ANTHROPIC_API_KEY is missing."""
-        with patch.dict(os.environ, {"TAVILY_API_KEY": "test"}, clear=True):
+        with patch.dict(os.environ, {"TAVILY_API_KEY": "test"}, clear=True), \
+             patch("beacon.config.load_dotenv"):
             from beacon.config import get_config
             with pytest.raises((ValueError, KeyError)):
                 get_config()
 
     def test_config_raises_on_missing_tavily_key(self):
         """Config must raise ValueError when TAVILY_API_KEY is missing."""
-        with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test"}, clear=True):
+        with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test"}, clear=True), \
+             patch("beacon.config.load_dotenv"):
             from beacon.config import get_config
             with pytest.raises((ValueError, KeyError)):
                 get_config()

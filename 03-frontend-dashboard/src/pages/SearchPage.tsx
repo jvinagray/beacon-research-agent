@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { X } from "lucide-react";
+import { X, Clock, Trash2 } from "lucide-react";
 import SearchInput from "@/components/SearchInput";
 import DepthSelector, { type Depth } from "@/components/DepthSelector";
 import ProgressFeed from "@/components/ProgressFeed";
 import { useResearch } from "@/hooks/useResearch";
 import { prepareRouterState } from "@/lib/prepareRouterState";
+import { saveSearch, loadHistory, removeEntry, clearHistory, type SearchHistoryEntry } from "@/lib/searchHistory";
 
 const SearchPage = () => {
   const [query, setQuery] = useState("");
@@ -26,6 +27,7 @@ const SearchPage = () => {
     }
   }, [location.state]);
 
+  const [history, setHistory] = useState<SearchHistoryEntry[]>(() => loadHistory());
   const isActive = state.status === "loading" || state.status === "streaming";
 
   const handleResearch = () => {
@@ -42,9 +44,27 @@ const SearchPage = () => {
 
   useEffect(() => {
     if (state.status === "complete") {
-      navigate("/dashboard", { state: prepareRouterState(state) });
+      const prepared = prepareRouterState(state);
+      saveSearch(prepared);
+      setHistory(loadHistory());
+      navigate("/dashboard", { state: prepared });
     }
   }, [state.status, state, navigate]);
+
+  const handleHistoryClick = (entry: SearchHistoryEntry) => {
+    navigate("/dashboard", { state: entry.state });
+  };
+
+  const handleRemoveEntry = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    removeEntry(id);
+    setHistory(loadHistory());
+  };
+
+  const handleClearHistory = () => {
+    clearHistory();
+    setHistory([]);
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 gap-8">
@@ -120,9 +140,63 @@ const SearchPage = () => {
           sources={state.sources}
           sourceTotal={state.sourceTotal}
         />
+
+        {/* Search History */}
+        {!isActive && history.length > 0 && (
+          <div className="w-full max-w-2xl glass rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <h2 className="text-sm font-medium text-foreground">Recent Searches</h2>
+              </div>
+              <button
+                onClick={handleClearHistory}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Clear all
+              </button>
+            </div>
+            <div className="flex flex-col gap-2">
+              {history.map((entry) => (
+                <button
+                  key={entry.id}
+                  onClick={() => handleHistoryClick(entry)}
+                  className="group flex items-center justify-between px-4 py-3 rounded-lg bg-glass-highlight/10 hover:bg-glass-highlight/25 transition-colors text-left"
+                >
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="text-sm text-foreground truncate">{entry.topic}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {entry.depth} &middot; {entry.sourceCount} sources &middot;{" "}
+                      {formatRelativeTime(entry.timestamp)}
+                    </span>
+                  </div>
+                  <span
+                    role="button"
+                    onClick={(e) => handleRemoveEntry(e, entry.id)}
+                    className="ml-3 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground transition-all"
+                    title="Remove"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
+function formatRelativeTime(ts: number): string {
+  const seconds = Math.floor((Date.now() - ts) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 export default SearchPage;

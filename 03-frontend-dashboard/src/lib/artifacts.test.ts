@@ -36,11 +36,74 @@ describe('normalizeArtifact', () => {
     expect(normalizeArtifact('resources', '["http://example.com"]')).toBeNull();
   });
 
-  it('handles malformed JSON gracefully (returns raw string)', () => {
+  it('handles malformed JSON gracefully (returns empty array)', () => {
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const malformed = '{not valid json';
     const result = normalizeArtifact('flashcards', malformed);
-    expect(result).toBe(malformed);
+    expect(result).toEqual([]);
+    consoleSpy.mockRestore();
+  });
+
+  it('normalizeArtifact("timeline", jsonString) returns TimelineEvent array', () => {
+    const events = [
+      { date: '2024-01', title: 'Launch', description: 'Launched.', source_title: 'Blog', significance: 'high' },
+      { date: '2024-06', title: 'Update', description: 'Updated.', source_title: 'Docs', significance: 'medium' },
+    ];
+    const result = normalizeArtifact('timeline', JSON.stringify(events));
+    expect(result).toEqual(events);
+  });
+
+  it('normalizeArtifact("timeline", malformedJson) returns empty array', () => {
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const result = normalizeArtifact('timeline', 'not valid json');
+    expect(result).toEqual([]);
+    consoleSpy.mockRestore();
+  });
+
+  it('normalizeArtifact("timeline", fencedJson) strips fences and parses', () => {
+    const events = [{ date: '2024-01', title: 'E', description: 'D', source_title: 'S', significance: 'low' }];
+    const fenced = '```json\n' + JSON.stringify(events) + '\n```';
+    const result = normalizeArtifact('timeline', fenced);
+    expect(result).toEqual(events);
+  });
+
+  it('normalizeArtifact("conflicts", jsonString) returns Conflict array', () => {
+    const conflicts = [
+      {
+        topic: 'Effectiveness of X',
+        source_a: { title: 'Paper A', claim: 'X improves by 40%' },
+        source_b: { title: 'Report B', claim: 'No significant improvement' },
+        assessment: 'Different methodologies',
+      },
+    ];
+    const result = normalizeArtifact('conflicts', JSON.stringify(conflicts));
+    expect(result).toEqual(conflicts);
+  });
+
+  it('normalizeArtifact("assumptions", jsonString) returns Assumption array', () => {
+    const assumptions = [
+      {
+        assumption: 'Hardware trends continue',
+        why_it_matters: 'Feasibility depends on scaling',
+        sources_relying: ['Tech Roadmap'],
+        risk_level: 'medium',
+      },
+    ];
+    const result = normalizeArtifact('assumptions', JSON.stringify(assumptions));
+    expect(result).toEqual(assumptions);
+  });
+
+  it('normalizeArtifact for conflicts handles malformed JSON (returns [])', () => {
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const result = normalizeArtifact('conflicts', 'not valid json');
+    expect(result).toEqual([]);
+    consoleSpy.mockRestore();
+  });
+
+  it('normalizeArtifact for assumptions handles malformed JSON (returns [])', () => {
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const result = normalizeArtifact('assumptions', '{broken');
+    expect(result).toEqual([]);
     consoleSpy.mockRestore();
   });
 });
