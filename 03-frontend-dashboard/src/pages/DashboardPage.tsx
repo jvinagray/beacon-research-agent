@@ -7,8 +7,18 @@ import SourceCard from "@/components/SourceCard";
 import MarkdownViewer from "@/components/MarkdownViewer";
 import ConceptMap from "@/components/ConceptMap";
 import FlashCard from "@/components/FlashCard";
+import ChatPanel from "@/components/ChatPanel";
+import ComplexitySlider from "@/components/ComplexitySlider";
+import DrillDownPanel from "@/components/DrillDownPanel";
+import Timeline from "@/components/Timeline";
+import ConflictCard from "@/components/ConflictCard";
+import AssumptionCard from "@/components/AssumptionCard";
+import { useChat } from "@/hooks/useChat";
+import { useRewrite } from "@/hooks/useRewrite";
+import { useDrillDown } from "@/hooks/useDrillDown";
+import { normalizeArtifact } from "@/lib/artifacts";
 import type { PreparedRouterState } from "@/lib/prepareRouterState";
-import type { Flashcard } from "@/types/research";
+import type { Conflict, Assumption, Flashcard, TimelineEvent } from "@/types/research";
 import { API_BASE_URL } from "@/config";
 
 const DashboardPage = () => {
@@ -22,6 +32,14 @@ const DashboardPage = () => {
       navigate("/search", {
         state: { message: "Your previous research session has expired." },
       });
+    } else {
+      const artKeys = Object.keys(researchState.artifacts);
+      const artSummary = artKeys.map(k => {
+        const v = researchState.artifacts[k];
+        const info = Array.isArray(v) ? `[${v.length} items]` : typeof v === 'string' ? `string(${v.length})` : typeof v;
+        return `${k}: ${info}`;
+      });
+      console.log(`[Beacon Dashboard] artifacts loaded:`, artSummary);
     }
   }, [researchState, navigate]);
 
@@ -35,6 +53,39 @@ const DashboardPage = () => {
     );
     return [...sorted, ...failed];
   }, [researchState]);
+
+  const timelineEvents = useMemo(() => {
+    const raw = researchState?.artifacts?.timeline;
+    if (!raw) return [];
+    const parsed = normalizeArtifact("timeline", raw as string);
+    return Array.isArray(parsed) ? (parsed as TimelineEvent[]) : [];
+  }, [researchState?.artifacts?.timeline]);
+
+  const conflicts = useMemo(() => {
+    const raw = researchState?.artifacts?.conflicts;
+    if (!raw) return [];
+    return normalizeArtifact('conflicts', raw as string) as Conflict[];
+  }, [researchState?.artifacts?.conflicts]);
+
+  const assumptions = useMemo(() => {
+    const raw = researchState?.artifacts?.assumptions;
+    if (!raw) return [];
+    return normalizeArtifact('assumptions', raw as string) as Assumption[];
+  }, [researchState?.artifacts?.assumptions]);
+
+  const visibleTabs = useMemo((): TabId[] => {
+    const base: TabId[] = ["sources", "summary", "concept-map", "flashcards"];
+    if (timelineEvents.length > 0) base.push("timeline");
+    base.push("analysis");
+    base.push("chat");
+    return base;
+  }, [timelineEvents]);
+
+  useEffect(() => {
+    if (!visibleTabs.includes(activeTab)) {
+      setActiveTab("sources");
+    }
+  }, [visibleTabs, activeTab]);
 
   const handleExport = useCallback(async () => {
     if (!researchState?.sessionId) return;
@@ -64,6 +115,22 @@ const DashboardPage = () => {
     }
   }, [researchState]);
 
+  const originalSummary = (researchState?.artifacts?.summary as string) || "";
+  const rewriteState = useRewrite(researchState?.sessionId ?? null, originalSummary);
+
+  const chatState = useChat(researchState?.sessionId ?? null);
+
+  const drillDown = useDrillDown(researchState?.sessionId ?? null);
+
+  const handleDrillDown = useCallback((concept: string, parentId?: string) => {
+    const status = drillDown.startDrillDown(concept, parentId);
+    if (status === "max-depth") {
+      toast.info("Maximum depth reached. Use the chat to explore further.");
+    } else if (status === "max-sessions") {
+      toast.info("Too many drill-downs. Use the chat to explore further.");
+    }
+  }, [drillDown.startDrillDown]);
+
   if (!researchState) return null;
 
   return (
@@ -74,7 +141,7 @@ const DashboardPage = () => {
         onExport={handleExport}
         exportDisabled={!researchState.sessionId}
       />
-      <TabNavigation active={activeTab} onChange={setActiveTab} />
+      <TabNavigation active={activeTab} onChange={setActiveTab} visibleTabs={visibleTabs} />
 
       <main className="flex-1 p-6 max-w-5xl mx-auto w-full">
         <div key={activeTab} className="animate-fade-in">
@@ -105,7 +172,32 @@ const DashboardPage = () => {
           {activeTab === "summary" && (
             <div data-testid="summary-placeholder">
               {researchState.artifacts.summary ? (
-                <MarkdownViewer content={researchState.artifacts.summary as string} />
+                <>
+                  <ComplexitySlider
+                    currentLevel={rewriteState.currentLevel}
+                    onLevelChange={rewriteState.requestRewrite}
+                    isStreaming={rewriteState.isStreaming}
+                  />
+                  <div className={rewriteState.isStreaming ? "opacity-50 transition-opacity" : ""}>
+                    <MarkdownViewer
+                      content={rewriteState.content || originalSummary}
+                      sources={researchState.sources}
+                      onDrillDown={handleDrillDown}
+                    />
+                    {rewriteState.isStreaming && (
+                      <span className="inline-block w-0.5 h-5 bg-primary animate-pulse ml-0.5" />
+                    )}
+                  </div>
+                  {drillDown.sessions.length > 0 && (
+                    <div className="mt-6">
+                      <DrillDownPanel
+                        sessions={drillDown.sessions}
+                        sources={researchState.sources}
+                        onDrillDown={handleDrillDown}
+                      />
+                    </div>
+                  )}
+                </>
               ) : (
                 <p className="text-slate-400 text-center py-8">
                   No summary was generated for this research.
@@ -127,7 +219,11 @@ const DashboardPage = () => {
           )}
 
           {activeTab === "flashcards" && (() => {
-            const rawFlashcards = researchState.artifacts?.flashcards;
+            let rawFlashcards = researchState.artifacts?.flashcards;
+            // Defensive: if stored as a JSON string, try parsing it
+            if (typeof rawFlashcards === 'string') {
+              try { rawFlashcards = JSON.parse(rawFlashcards); } catch { /* keep as-is */ }
+            }
             const flashcards: Flashcard[] = Array.isArray(rawFlashcards) ? rawFlashcards : [];
             return (
               <div>
@@ -155,7 +251,50 @@ const DashboardPage = () => {
               </div>
             );
           })()}
+
+          {activeTab === "timeline" && <Timeline events={timelineEvents} />}
+
+          {activeTab === "analysis" && (
+            <div className="space-y-8">
+              <section>
+                <h2 className="text-xl font-semibold mb-4">Source Disagreements</h2>
+                {conflicts.length > 0 ? (
+                  <div className="space-y-4">
+                    {conflicts.map((c, i) => <ConflictCard key={i} conflict={c} />)}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-6 glass rounded-xl">
+                    No disagreements detected between sources.
+                  </p>
+                )}
+              </section>
+              <section>
+                <h2 className="text-xl font-semibold mb-4">Hidden Assumptions</h2>
+                {assumptions.length > 0 ? (
+                  <div className="space-y-4">
+                    {assumptions.map((a, i) => <AssumptionCard key={i} assumption={a} />)}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-6 glass rounded-xl">
+                    No notable assumptions identified.
+                  </p>
+                )}
+              </section>
+            </div>
+          )}
         </div>
+
+        {/* Chat outside the keyed div — state persists across tab switches */}
+        {activeTab === "chat" && (
+          <ChatPanel
+            sessionId={researchState.sessionId}
+            topic={researchState.topic}
+            messages={chatState.messages}
+            isStreaming={chatState.isStreaming}
+            error={chatState.error}
+            sendMessage={chatState.sendMessage}
+          />
+        )}
       </main>
     </div>
   );

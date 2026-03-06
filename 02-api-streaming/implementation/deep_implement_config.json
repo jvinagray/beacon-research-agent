@@ -34,6 +34,10 @@
     "section-05-sse": {
       "status": "complete",
       "commit_hash": "1c9ec0c"
+    },
+    "section-06-routes-app": {
+      "status": "complete",
+      "commit_hash": "c2ba00f"
     }
   },
   "pre_commit": {

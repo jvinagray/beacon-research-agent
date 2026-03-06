@@ -41,8 +41,14 @@ You are a research synthesizer. Based on the sources provided below, write an ex
 2. Highlights areas of consensus and any disagreements between sources
 3. Uses clear markdown headings to organize the summary
 4. Is 1-2 pages of well-structured markdown
+5. Includes inline citations for every factual claim using the format [Source Title](cite:N) where N is the 1-indexed source number (matching the order sources appear above)
+6. Every paragraph must have at least one citation
+7. Multiple citations can be placed together when a claim is supported by multiple sources: [Title A](cite:1)[Title B](cite:3)
+8. Use the exact source titles as they appear in the source headings above
 
 Focus on the most important findings and practical takeaways. Write for someone who wants to quickly understand the current state of knowledge on this topic.
+
+For 5-8 key concepts or claims that a reader might want to explore further, make the concept text a link with the format [concept text](drill://concept text). Choose technical terms, debatable claims, or topics with significant depth. Do not URL-encode the concept -- use plain text after drill://.
 
 {context}
 
@@ -86,6 +92,69 @@ Example:
   {"question": "What is the primary purpose of X?", "answer": "X is used to accomplish Y by doing Z."},
   {"question": "What are the three main types of A?", "answer": "The three types are B, C, and D."}
 ]
+
+{context}
+
+Respond with ONLY the JSON array. Do NOT wrap your response in markdown code fences. No ``` or ```json wrappers."""
+
+GENERATE_TIMELINE_PROMPT = """\
+You are a research timeline builder. Based on the sources provided below, extract 5-15 temporal events that represent key milestones, releases, breakthroughs, or shifts in thinking.
+
+Output a JSON array of objects sorted chronologically, each with these fields:
+- date (string): Date or time period (e.g. "2024-01", "March 2023", "2022 Q3")
+- title (string): Short event title
+- description (string): 1-2 sentence description of the event
+- source_title (string): Title of the source this event came from
+- significance (string): One of "high", "medium", or "low"
+
+Include milestones, releases, breakthroughs, and shifts in thinking.
+
+Example:
+[
+  {{"date": "2024-01", "title": "Initial Release", "description": "The framework was first released with core features.", "source_title": "Official Blog", "significance": "high"}},
+  {{"date": "2024-06", "title": "Major Update", "description": "Added plugin system and improved performance.", "source_title": "Release Notes", "significance": "medium"}}
+]
+
+If there is no meaningful temporal dimension to the sources, return an empty array [].
+
+Do NOT wrap your response in markdown code fences. No ``` or ```json wrappers.
+
+{context}
+
+Respond with ONLY the JSON array."""
+
+
+GENERATE_CONFLICTS_PROMPT = """\
+You are a critical research analyst. Based on the sources provided below, identify 2-5 disagreements or contradictions between the sources.
+
+Output a JSON array of objects, each with these fields:
+- topic (string): The topic or claim where sources disagree
+- source_a (object): {{"title": "source title", "claim": "what this source claims"}}
+- source_b (object): {{"title": "source title", "claim": "what this source claims"}}
+- assessment (string): Brief analysis of why sources disagree and which may be more reliable
+
+If there are no meaningful conflicts or disagreements between sources, return an empty array [].
+
+Do NOT wrap your response in markdown code fences. No ``` or ```json wrappers.
+
+{context}
+
+Respond with ONLY the JSON array."""
+
+GENERATE_ASSUMPTIONS_PROMPT = """\
+You are an analytical thinker specializing in identifying hidden premises. Based on the sources provided below, identify 3-5 hidden assumptions that underpin the claims and conclusions.
+
+Output a JSON array of objects, each with these fields:
+- assumption (string): The hidden assumption being made
+- why_it_matters (string): Why this assumption matters and what happens if it's wrong
+- sources_relying (array of strings): Titles of sources that rely on this assumption
+- risk_level (string): One of "high", "medium", or "low" — how risky it is if this assumption is wrong
+
+Focus on assumptions that could invalidate key conclusions if they turn out to be false.
+
+If there are no notable hidden assumptions, return an empty array [].
+
+Do NOT wrap your response in markdown code fences. No ``` or ```json wrappers.
 
 {context}
 

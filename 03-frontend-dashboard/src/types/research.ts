@@ -53,6 +53,28 @@ export interface CompleteSummary {
   artifact_types: string[];
 }
 
+export interface TimelineEvent {
+  date: string;
+  title: string;
+  description: string;
+  source_title: string;
+  significance: 'high' | 'medium' | 'low';
+}
+
+export interface Conflict {
+  topic: string;
+  source_a: { title: string; claim: string };
+  source_b: { title: string; claim: string };
+  assessment: string;
+}
+
+export interface Assumption {
+  assumption: string;
+  why_it_matters: string;
+  sources_relying: string[];
+  risk_level: 'high' | 'medium' | 'low';
+}
+
 /** Backend sends flashcards as a JSON-encoded string; the artifact normalizer parses into Flashcard[]. */
 export interface Flashcard {
   question: string;
@@ -81,3 +103,14 @@ export type ResearchAction =
   | { type: 'COMPLETE'; sessionId: string; summary: CompleteSummary }
   | { type: 'ERROR'; message: string; recoverable: boolean }
   | { type: 'RESET' };
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  sources?: { title: string; url: string }[];
+}
+
+export type ChatSSEEvent =
+  | { type: 'delta'; content: string }
+  | { type: 'done'; sources: { title: string; url: string }[] }
+  | { type: 'error'; message: string };

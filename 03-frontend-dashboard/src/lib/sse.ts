@@ -11,6 +11,7 @@ export function connectSSE(params: {
 }): void {
   const { topic, depth, signal, onEvent, onError } = params;
   let errorHandled = false;
+  let completed = false;
 
   fetchEventSource(`${API_BASE_URL}/api/research`, {
     method: 'POST',
@@ -28,11 +29,22 @@ export function connectSSE(params: {
     },
 
     onmessage(event) {
+      if (!event.data) return;
       try {
         const parsed = JSON.parse(event.data) as SSEEvent;
+        if (parsed.type === 'artifact') {
+          const artEvt = parsed as { artifact_type: string; data: unknown };
+          const preview = typeof artEvt.data === 'string'
+            ? artEvt.data.slice(0, 120)
+            : JSON.stringify(artEvt.data).slice(0, 120);
+          console.log(`[Beacon SSE] artifact "${artEvt.artifact_type}" received (${typeof artEvt.data}, ${String(artEvt.data).length} chars): ${preview}…`);
+        }
+        if (parsed.type === 'complete') {
+          completed = true;
+        }
         onEvent(parsed);
-      } catch (err) {
-        onError(err instanceof Error ? err : new Error('Failed to parse SSE message'));
+      } catch {
+        // Ignore non-JSON messages (e.g. SSE pings)
       }
     },
 
@@ -50,7 +62,9 @@ export function connectSSE(params: {
     },
 
     onclose() {
-      throw new Error('Connection closed unexpectedly');
+      if (!completed) {
+        throw new Error('Connection closed unexpectedly');
+      }
     },
   }).catch((err) => {
     if (!errorHandled) {

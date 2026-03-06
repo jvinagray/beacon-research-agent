@@ -188,6 +188,18 @@ class TestPipelineEvents:
         evt = ArtifactEvent(artifact_type="resources", data="[]")
         assert evt.artifact_type == "resources"
 
+    def test_artifact_event_supports_timeline_type(self):
+        evt = ArtifactEvent(artifact_type="timeline", data="[]")
+        assert evt.artifact_type == "timeline"
+
+    def test_artifact_event_supports_conflicts_type(self):
+        evt = ArtifactEvent(artifact_type="conflicts", data="[]")
+        assert evt.artifact_type == "conflicts"
+
+    def test_artifact_event_supports_assumptions_type(self):
+        evt = ArtifactEvent(artifact_type="assumptions", data="[]")
+        assert evt.artifact_type == "assumptions"
+
     def test_error_event_type(self):
         evt = ErrorEvent(message="Something failed.", recoverable=True)
         data = evt.model_dump()
