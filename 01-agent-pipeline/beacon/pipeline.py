@@ -198,18 +198,26 @@ async def run_research(
             )
             artifacts = {}
 
-        # Yield individual artifact events
+        # Yield individual artifact events (skip empty collections)
         for artifact_type, data in artifacts.items():
-            if data is not None:
-                # Serialize non-string/non-Flashcard data (e.g. resources) to JSON
-                if isinstance(data, str) or (
-                    isinstance(data, list)
-                    and all(isinstance(item, Flashcard) for item in data)
-                ):
-                    event_data = data
-                else:
-                    event_data = json.dumps(data, default=str)
-                yield ArtifactEvent(artifact_type=artifact_type, data=event_data)
+            if data is None:
+                continue
+            if isinstance(data, list) and len(data) == 0:
+                logger.info("Skipping empty artifact: %s", artifact_type)
+                continue
+            if isinstance(data, str):
+                event_data: str | list[Flashcard] = data
+            elif isinstance(data, list) and all(
+                isinstance(item, Flashcard) for item in data
+            ):
+                # Serialize flashcards to JSON string to avoid Pydantic
+                # union serialization issues with str | list[Flashcard]
+                event_data = json.dumps(
+                    [item.model_dump() for item in data]
+                )
+            else:
+                event_data = json.dumps(data, default=str)
+            yield ArtifactEvent(artifact_type=artifact_type, data=event_data)
 
         # --- COMPLETE ---
         yield CompleteEvent(

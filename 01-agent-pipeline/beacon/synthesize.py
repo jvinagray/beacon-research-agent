@@ -22,6 +22,58 @@ from beacon.prompts import (
 logger = logging.getLogger(__name__)
 
 
+def _extract_json_array(text: str) -> list | None:
+    """Robustly extract a JSON array from Claude's response text.
+
+    Handles: bare JSON, code-fenced JSON, JSON embedded in prose,
+    and prose containing stray brackets before the actual array.
+    Returns the parsed list, or None on failure.
+    """
+    text = text.strip()
+
+    # 1. Strip markdown code fences (```json ... ```)
+    stripped = re.sub(
+        r'^\s*```[a-zA-Z]*\s*\r?\n?(.*?)\r?\n?\s*```\s*$',
+        r'\1',
+        text,
+        flags=re.DOTALL,
+    ).strip()
+
+    # 2. Try direct parse (covers bare JSON and successful fence stripping)
+    if stripped.startswith('['):
+        try:
+            result = json.loads(stripped)
+            if isinstance(result, list):
+                return result
+        except json.JSONDecodeError:
+            pass
+
+    # 3. Look for a JSON array of objects embedded in prose: find [{ pattern
+    match = re.search(r'\[\s*\{', text)
+    if match:
+        candidate = text[match.start():]
+        # Try parsing progressively shorter substrings from the last ]
+        for end in [m.end() for m in re.finditer(r'\]', candidate)][::-1]:
+            try:
+                result = json.loads(candidate[:end])
+                if isinstance(result, list):
+                    return result
+            except json.JSONDecodeError:
+                continue
+
+    # 4. Last resort: try any [...] match
+    match = re.search(r'\[.*\]', text, flags=re.DOTALL)
+    if match:
+        try:
+            result = json.loads(match.group(0))
+            if isinstance(result, list):
+                return result
+        except json.JSONDecodeError:
+            pass
+
+    return None
+
+
 async def _generate_summary(context: str, client: AsyncAnthropic) -> str:
     """Generate executive summary. max_tokens=4096, timeout=SYNTH_TIMEOUT."""
     prompt = GENERATE_SUMMARY_PROMPT.replace("{context}", context)
@@ -64,28 +116,15 @@ async def _generate_flashcards(context: str, client: AsyncAnthropic) -> list[Fla
         ),
         timeout=SYNTH_TIMEOUT,
     )
-    text = response.content[0].text.strip()
-    # Strip markdown code fences if present (flexible: any language tag, \r\n)
-    text = re.sub(
-        r'^\s*```[a-zA-Z]*\s*\r?\n?(.*?)\r?\n?\s*```\s*$',
-        r'\1',
-        text,
-        flags=re.DOTALL,
-    )
-    # Fallback: if text still doesn't start with '[', try to extract the JSON array
-    text = text.strip()
-    if not text.startswith('['):
-        match = re.search(r'\[.*\]', text, flags=re.DOTALL)
-        if match:
-            text = match.group(0)
+    text = response.content[0].text
+    items = _extract_json_array(text)
+    if items is None:
+        logger.warning("Failed to parse flashcards JSON — raw text: %.300s", text.strip())
+        return []
     try:
-        items = json.loads(text)
-        if not isinstance(items, list):
-            logger.warning("Flashcards response is not a list, returning empty")
-            return []
         return [Flashcard(**item) for item in items]
-    except (json.JSONDecodeError, TypeError, ValueError) as exc:
-        logger.warning("Failed to parse flashcards JSON: %s — raw text: %.200s", exc, text)
+    except (TypeError, ValueError) as exc:
+        logger.warning("Invalid flashcard structure: %s — parsed: %.200s", exc, items)
         return []
 
 
@@ -100,28 +139,12 @@ async def _generate_timeline(context: str, client: AsyncAnthropic) -> list[dict]
         ),
         timeout=SYNTH_TIMEOUT,
     )
-    text = response.content[0].text.strip()
-    # Strip markdown code fences if present
-    text = re.sub(
-        r'^\s*```[a-zA-Z]*\s*\r?\n?(.*?)\r?\n?\s*```\s*$',
-        r'\1',
-        text,
-        flags=re.DOTALL,
-    )
-    text = text.strip()
-    if not text.startswith('['):
-        match = re.search(r'\[.*\]', text, flags=re.DOTALL)
-        if match:
-            text = match.group(0)
-    try:
-        items = json.loads(text)
-        if not isinstance(items, list):
-            logger.warning("Timeline response is not a list, returning empty")
-            return []
-        return items
-    except (json.JSONDecodeError, TypeError, ValueError) as exc:
-        logger.warning("Failed to parse timeline JSON: %s — raw text: %.200s", exc, text)
+    text = response.content[0].text
+    items = _extract_json_array(text)
+    if items is None:
+        logger.warning("Failed to parse timeline JSON — raw text: %.300s", text.strip())
         return []
+    return items
 
 
 async def _generate_conflicts(context: str, client: AsyncAnthropic) -> list[dict]:
@@ -135,28 +158,12 @@ async def _generate_conflicts(context: str, client: AsyncAnthropic) -> list[dict
         ),
         timeout=SYNTH_TIMEOUT,
     )
-    text = response.content[0].text.strip()
-    # Strip markdown code fences if present
-    text = re.sub(
-        r'^\s*```[a-zA-Z]*\s*\r?\n?(.*?)\r?\n?\s*```\s*$',
-        r'\1',
-        text,
-        flags=re.DOTALL,
-    )
-    text = text.strip()
-    if not text.startswith('['):
-        match = re.search(r'\[.*\]', text, flags=re.DOTALL)
-        if match:
-            text = match.group(0)
-    try:
-        items = json.loads(text)
-        if not isinstance(items, list):
-            logger.warning("Conflicts response is not a list, returning empty")
-            return []
-        return items
-    except (json.JSONDecodeError, TypeError, ValueError) as exc:
-        logger.warning("Failed to parse conflicts JSON: %s — raw text: %.200s", exc, text)
+    text = response.content[0].text
+    items = _extract_json_array(text)
+    if items is None:
+        logger.warning("Failed to parse conflicts JSON — raw text: %.300s", text.strip())
         return []
+    return items
 
 
 async def _generate_assumptions(context: str, client: AsyncAnthropic) -> list[dict]:
@@ -170,28 +177,12 @@ async def _generate_assumptions(context: str, client: AsyncAnthropic) -> list[di
         ),
         timeout=SYNTH_TIMEOUT,
     )
-    text = response.content[0].text.strip()
-    # Strip markdown code fences if present
-    text = re.sub(
-        r'^\s*```[a-zA-Z]*\s*\r?\n?(.*?)\r?\n?\s*```\s*$',
-        r'\1',
-        text,
-        flags=re.DOTALL,
-    )
-    text = text.strip()
-    if not text.startswith('['):
-        match = re.search(r'\[.*\]', text, flags=re.DOTALL)
-        if match:
-            text = match.group(0)
-    try:
-        items = json.loads(text)
-        if not isinstance(items, list):
-            logger.warning("Assumptions response is not a list, returning empty")
-            return []
-        return items
-    except (json.JSONDecodeError, TypeError, ValueError) as exc:
-        logger.warning("Failed to parse assumptions JSON: %s — raw text: %.200s", exc, text)
+    text = response.content[0].text
+    items = _extract_json_array(text)
+    if items is None:
+        logger.warning("Failed to parse assumptions JSON — raw text: %.300s", text.strip())
         return []
+    return items
 
 
 async def synthesize(
@@ -228,18 +219,14 @@ async def synthesize(
     conflicts = results[4] if not isinstance(results[4], Exception) else []
     assumptions = results[5] if not isinstance(results[5], Exception) else []
 
-    if isinstance(results[0], Exception):
-        logger.warning("Summary generation failed: %s", results[0])
-    if isinstance(results[1], Exception):
-        logger.warning("Concept map generation failed: %s", results[1])
-    if isinstance(results[2], Exception):
-        logger.warning("Flashcards generation failed: %s", results[2])
-    if isinstance(results[3], Exception):
-        logger.warning("Timeline generation failed: %s", results[3])
-    if isinstance(results[4], Exception):
-        logger.warning("Conflicts generation failed: %s", results[4])
-    if isinstance(results[5], Exception):
-        logger.warning("Assumptions generation failed: %s", results[5])
+    artifact_names = ["Summary", "Concept map", "Flashcards", "Timeline", "Conflicts", "Assumptions"]
+    for i, name in enumerate(artifact_names):
+        if isinstance(results[i], Exception):
+            logger.warning("%s generation failed: %s", name, results[i])
+        else:
+            val = results[i]
+            detail = f"{len(val)} items" if isinstance(val, list) else f"{len(val)} chars" if isinstance(val, str) else type(val).__name__
+            logger.info("%s generated: %s", name, detail)
 
     # Resources artifact: assembled directly from source data
     resources = [source.model_dump() for source in sources]

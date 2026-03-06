@@ -32,6 +32,13 @@ export function connectSSE(params: {
       if (!event.data) return;
       try {
         const parsed = JSON.parse(event.data) as SSEEvent;
+        if (parsed.type === 'artifact') {
+          const artEvt = parsed as { artifact_type: string; data: unknown };
+          const preview = typeof artEvt.data === 'string'
+            ? artEvt.data.slice(0, 120)
+            : JSON.stringify(artEvt.data).slice(0, 120);
+          console.log(`[Beacon SSE] artifact "${artEvt.artifact_type}" received (${typeof artEvt.data}, ${String(artEvt.data).length} chars): ${preview}…`);
+        }
         if (parsed.type === 'complete') {
           completed = true;
         }

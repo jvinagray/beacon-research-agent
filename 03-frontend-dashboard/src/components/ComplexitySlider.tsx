@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Slider } from '@/components/ui/slider';
 
 const LEVEL_LABELS = ['ELI5', 'Simple', 'General', 'Technical', 'Expert'] as const;
@@ -9,6 +10,13 @@ interface ComplexitySliderProps {
 }
 
 const ComplexitySlider = ({ currentLevel, onLevelChange, isStreaming }: ComplexitySliderProps) => {
+  const [displayLevel, setDisplayLevel] = useState(currentLevel);
+
+  // Sync display level when the external level changes (e.g. after rewrite completes)
+  useEffect(() => {
+    setDisplayLevel(currentLevel);
+  }, [currentLevel]);
+
   return (
     <div className="mb-4 space-y-2">
       <div className="flex items-center justify-between">
@@ -21,7 +29,8 @@ const ComplexitySlider = ({ currentLevel, onLevelChange, isStreaming }: Complexi
         min={1}
         max={5}
         step={1}
-        value={[currentLevel]}
+        value={[displayLevel]}
+        onValueChange={(value) => setDisplayLevel(value[0])}
         onValueCommit={(value) => onLevelChange(value[0])}
         disabled={isStreaming}
       />
@@ -30,7 +39,7 @@ const ComplexitySlider = ({ currentLevel, onLevelChange, isStreaming }: Complexi
           <span
             key={label}
             className={`text-xs ${
-              i + 1 === currentLevel ? 'text-primary font-medium' : 'text-muted-foreground'
+              i + 1 === displayLevel ? 'text-primary font-medium' : 'text-muted-foreground'
             }`}
           >
             {label}
