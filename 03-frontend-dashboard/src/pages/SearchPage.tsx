@@ -1,12 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { X, Clock, Trash2 } from "lucide-react";
 import SearchInput from "@/components/SearchInput";
 import DepthSelector, { type Depth } from "@/components/DepthSelector";
 import ProgressFeed from "@/components/ProgressFeed";
+import { BrainGraph } from "@/components/BrainGraph";
 import { useResearch } from "@/hooks/useResearch";
+import { useBrainSimulation } from "@/hooks/useBrainSimulation";
+import { useBrainEventBridge } from "@/hooks/useBrainEventBridge";
 import { prepareRouterState } from "@/lib/prepareRouterState";
 import { saveSearch, loadHistory, removeEntry, clearHistory, type SearchHistoryEntry } from "@/lib/searchHistory";
+import type { SerializedGraphSnapshot } from "@/types/brain-graph";
 
 const SearchPage = () => {
   const [query, setQuery] = useState("");
@@ -15,6 +19,40 @@ const SearchPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [infoBanner, setInfoBanner] = useState<string | null>(null);
+  const [minimized, setMinimized] = useState(false);
+  const [snapshot, setSnapshot] = useState<SerializedGraphSnapshot | null>(null);
+  const navigatedRef = useRef(false);
+
+  const isActive = state.status === "loading" || state.status === "streaming";
+
+  // Brain graph refs and dimensions
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        setDimensions({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
+        });
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isActive]);
+
+  const simulation = useBrainSimulation(svgRef, dimensions);
+
+  const handleSnapshot = useCallback((s: SerializedGraphSnapshot) => {
+    setSnapshot(s);
+  }, []);
+
+  useBrainEventBridge(state, simulation, handleSnapshot);
 
   useEffect(() => {
     const msg = (location.state as { message?: string } | null)?.message;
@@ -28,7 +66,6 @@ const SearchPage = () => {
   }, [location.state]);
 
   const [history, setHistory] = useState<SearchHistoryEntry[]>(() => loadHistory());
-  const isActive = state.status === "loading" || state.status === "streaming";
 
   const handleResearch = () => {
     if (!query.trim()) return;
@@ -42,14 +79,38 @@ const SearchPage = () => {
     }
   };
 
+  // Reset navigation guard when a new research run starts
   useEffect(() => {
-    if (state.status === "complete") {
-      const prepared = prepareRouterState(state);
+    if (state.status === "loading") {
+      navigatedRef.current = false;
+    }
+  }, [state.status]);
+
+  // Navigate on completion — wait for snapshot if possible, fallback after 5s
+  useEffect(() => {
+    if (state.status !== "complete" || navigatedRef.current) return;
+
+    if (snapshot) {
+      navigatedRef.current = true;
+      const prepared = prepareRouterState(state, snapshot);
       saveSearch(prepared);
       setHistory(loadHistory());
       navigate("/dashboard", { state: prepared });
+      return;
     }
-  }, [state.status, state, navigate]);
+
+    // Fallback: navigate without snapshot after 5s
+    const timer = setTimeout(() => {
+      if (!navigatedRef.current) {
+        navigatedRef.current = true;
+        const prepared = prepareRouterState(state);
+        saveSearch(prepared);
+        setHistory(loadHistory());
+        navigate("/dashboard", { state: prepared });
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [state.status, snapshot, state, navigate]);
 
   const handleHistoryClick = (entry: SearchHistoryEntry) => {
     navigate("/dashboard", { state: entry.state });
@@ -130,6 +191,21 @@ const SearchPage = () => {
             >
               Try Again
             </button>
+          </div>
+        )}
+
+        {/* Brain Graph Overlay */}
+        {isActive && (
+          <div
+            ref={containerRef}
+            className="w-full max-w-2xl h-80 relative z-20"
+          >
+            <BrainGraph
+              svgRef={svgRef}
+              minimized={minimized}
+              onMinimize={() => setMinimized(true)}
+              onRestore={() => setMinimized(false)}
+            />
           </div>
         )}
 

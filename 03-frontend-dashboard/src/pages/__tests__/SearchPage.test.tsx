@@ -1,8 +1,44 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import SearchPage from '../SearchPage';
 import type { ResearchState } from '../../types/research';
+
+// jsdom lacks ResizeObserver
+globalThis.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
+// Mock brain graph dependencies to isolate page logic
+vi.mock('@/components/BrainGraph', () => ({
+  BrainGraph: () => <div data-testid="brain-graph" />,
+}));
+vi.mock('@/hooks/useBrainSimulation', () => ({
+  useBrainSimulation: () => ({
+    addStageNodes: vi.fn(),
+    addSourceNode: vi.fn(),
+    addConceptNodes: vi.fn(),
+    activateStage: vi.fn(),
+    completeStage: vi.fn(),
+    settle: vi.fn(),
+    getSnapshot: vi.fn(),
+    initFromSnapshot: vi.fn(),
+    destroy: vi.fn(),
+  }),
+}));
+
+let capturedOnSnapshot: ((s: unknown) => void) | undefined;
+vi.mock('@/hooks/useBrainEventBridge', () => ({
+  useBrainEventBridge: (
+    _state: unknown,
+    _sim: unknown,
+    onSnapshot?: (s: unknown) => void,
+  ) => {
+    capturedOnSnapshot = onSnapshot;
+  },
+}));
 
 const mockStartResearch = vi.fn();
 const mockReset = vi.fn();
@@ -139,7 +175,7 @@ describe('SearchPage', () => {
     expect(mockStartResearch).toHaveBeenCalledWith('React', 'standard');
   });
 
-  it('navigates to /dashboard on complete', () => {
+  it('navigates to /dashboard on complete when snapshot fires', async () => {
     mockState = {
       ...initialState,
       status: 'complete',
@@ -151,6 +187,12 @@ describe('SearchPage', () => {
       summary: { topic: 'React', depth: 'standard', source_count: 0, artifact_types: [] },
     };
     renderSearchPage();
+
+    // Fire snapshot to trigger navigation
+    act(() => {
+      capturedOnSnapshot?.({ nodes: [], links: [], nodeCount: 0, linkCount: 0 });
+    });
+
     expect(mockNavigate).toHaveBeenCalledWith('/dashboard', expect.objectContaining({ state: expect.any(Object) }));
   });
 });

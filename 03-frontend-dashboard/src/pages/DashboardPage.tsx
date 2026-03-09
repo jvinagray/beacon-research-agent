@@ -13,6 +13,8 @@ import DrillDownPanel from "@/components/DrillDownPanel";
 import Timeline from "@/components/Timeline";
 import ConflictCard from "@/components/ConflictCard";
 import AssumptionCard from "@/components/AssumptionCard";
+import { BrainBadge } from "@/components/BrainBadge";
+import { BrainGraphModal } from "@/components/BrainGraphModal";
 import { useChat } from "@/hooks/useChat";
 import { useRewrite } from "@/hooks/useRewrite";
 import { useDrillDown } from "@/hooks/useDrillDown";
@@ -26,6 +28,8 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const researchState = location.state as PreparedRouterState | null;
   const [activeTab, setActiveTab] = useState<TabId>("sources");
+  const brainGraphSnapshot = researchState?.brainGraphSnapshot ?? null;
+  const [brainModalOpen, setBrainModalOpen] = useState(false);
 
   useEffect(() => {
     if (!researchState || !researchState.sessionId) {
@@ -164,6 +168,26 @@ const DashboardPage = () => {
         exportDisabled={!researchState.sessionId}
       />
       <TabNavigation active={activeTab} onChange={setActiveTab} visibleTabs={visibleTabs} />
+
+      {brainGraphSnapshot && (
+        <div className="max-w-5xl mx-auto w-full px-6 pt-4">
+          <BrainBadge
+            snapshot={brainGraphSnapshot}
+            onExpand={() => setBrainModalOpen(true)}
+          />
+        </div>
+      )}
+      {brainGraphSnapshot && (
+        <BrainGraphModal
+          isOpen={brainModalOpen}
+          onClose={() => setBrainModalOpen(false)}
+          snapshot={brainGraphSnapshot}
+          onNodeClick={(nodeType, nodeId) => {
+            handleBrainNodeClick(nodeType, nodeId);
+            setBrainModalOpen(false);
+          }}
+        />
+      )}
 
       <main className="flex-1 p-6 max-w-5xl mx-auto w-full">
         <div key={activeTab} className="animate-fade-in">
