@@ -1,7 +1,16 @@
-import { useEffect, useId, type RefObject } from "react";
+import { useEffect, useId, useState, type RefObject } from "react";
 import * as d3 from "d3";
 import { Minimize2, Maximize2 } from "lucide-react";
+import type { GraphNode, GraphLink } from "@/types/brain-graph";
+import { BrainGraphTooltip } from "./BrainGraphTooltip";
 import "./BrainGraph.css";
+
+interface HoveredNodeState {
+  node: GraphNode;
+  x: number;
+  y: number;
+  linkedSourceTitles?: string[];
+}
 
 interface BrainGraphProps {
   svgRef: RefObject<SVGSVGElement | null>;
@@ -9,6 +18,15 @@ interface BrainGraphProps {
   onMinimize: () => void;
   onRestore: () => void;
   className?: string;
+  nodes?: GraphNode[];
+  links?: GraphLink[];
+}
+
+/** D3 forceLink mutates link endpoints from string IDs to node objects. */
+function getLinkEndpoint(endpoint: string | { id: string }): string {
+  return typeof endpoint === "object" && endpoint !== null
+    ? endpoint.id
+    : endpoint;
 }
 
 export function BrainGraph({
@@ -17,9 +35,17 @@ export function BrainGraph({
   onMinimize,
   onRestore,
   className,
+  nodes,
+  links,
 }: BrainGraphProps) {
   const filterId = useId();
   const glowId = `glow-${filterId.replace(/:/g, "")}`;
+  const [hoveredNode, setHoveredNode] = useState<HoveredNodeState | null>(null);
+
+  // Clear tooltip when graph is minimized
+  useEffect(() => {
+    if (minimized) setHoveredNode(null);
+  }, [minimized]);
 
   // Set up zoom/pan behavior
   useEffect(() => {
@@ -42,6 +68,60 @@ export function BrainGraph({
       svg.on(".zoom", null);
     };
   }, [svgRef]);
+
+  // Set up hover event listeners on node elements
+  useEffect(() => {
+    const svgEl = svgRef.current;
+    if (!svgEl) return;
+
+    const svg = d3.select(svgEl);
+    const nodeGroup = svg.select<SVGGElement>(".nodes");
+
+    function handleMouseEnter(event: MouseEvent, d: GraphNode) {
+      let linkedTitles: string[] | undefined;
+      if (d.type === "concept" && links && nodes) {
+        linkedTitles = links
+          .filter(
+            (l) =>
+              (getLinkEndpoint(l.source) === d.id ||
+                getLinkEndpoint(l.target) === d.id) &&
+              l.type === "concept-to-source",
+          )
+          .map((l) => {
+            const otherId =
+              getLinkEndpoint(l.source) === d.id
+                ? getLinkEndpoint(l.target)
+                : getLinkEndpoint(l.source);
+            const node = nodes.find((n) => n.id === otherId);
+            return node?.type === "source" ? node.title : otherId;
+          });
+      }
+      setHoveredNode({
+        node: d,
+        x: event.clientX,
+        y: event.clientY,
+        linkedSourceTitles: linkedTitles,
+      });
+    }
+
+    function handleMouseLeave() {
+      setHoveredNode(null);
+    }
+
+    nodeGroup
+      .selectAll<SVGElement, GraphNode>(".node")
+      .on("mouseenter", function (event, d) {
+        handleMouseEnter(event as unknown as MouseEvent, d);
+      })
+      .on("mouseleave", handleMouseLeave);
+
+    return () => {
+      nodeGroup
+        .selectAll<SVGElement, GraphNode>(".node")
+        .on("mouseenter", null)
+        .on("mouseleave", null);
+    };
+  }, [svgRef, nodes, links]);
 
   const containerClasses = [
     "brain-graph-container",
@@ -77,6 +157,14 @@ export function BrainGraph({
       >
         {minimized ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
       </button>
+      {!minimized && (
+        <BrainGraphTooltip
+          hoveredNode={hoveredNode?.node ?? null}
+          x={hoveredNode?.x ?? 0}
+          y={hoveredNode?.y ?? 0}
+          linkedSourceTitles={hoveredNode?.linkedSourceTitles}
+        />
+      )}
     </div>
   );
 }
