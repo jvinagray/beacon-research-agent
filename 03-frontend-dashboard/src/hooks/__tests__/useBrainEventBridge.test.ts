@@ -4,13 +4,16 @@ import { useBrainEventBridge } from "../useBrainEventBridge";
 import type { ResearchState } from "@/types/research";
 
 vi.mock("@/lib/brain-graph-concepts", () => ({
-  extractConcepts: vi.fn(() => [
-    { id: "concept-ai", type: "concept", name: "AI", mentionCount: 3, radius: 14 },
-    { id: "concept-ml", type: "concept", name: "ML", mentionCount: 2, radius: 12 },
-  ]),
-  buildConceptSourceEdges: vi.fn(() => [
-    { source: "concept-ai", target: "https://example.com", type: "concept-to-source" as const },
-  ]),
+  extractConcepts: vi.fn(() => ["AI", "ML"]),
+  buildConceptSourceEdges: vi.fn(() => ({
+    concepts: [
+      { id: "concept-ai", type: "concept", name: "AI", mentionCount: 3, radius: 14 },
+      { id: "concept-ml", type: "concept", name: "ML", mentionCount: 2, radius: 12 },
+    ],
+    edges: [
+      { source: "concept-ai", target: "https://example.com", type: "concept-to-source" as const },
+    ],
+  })),
 }));
 
 function createMockSimulation() {
