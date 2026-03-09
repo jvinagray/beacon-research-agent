@@ -11,6 +11,7 @@ import type {
 import type { EvaluatedSource } from "@/types/research";
 import {
   mapContentType,
+  getContentColor,
   computeSourceRadius,
   computeSourceOpacity,
 } from "@/lib/brain-graph-utils";
@@ -112,6 +113,161 @@ export function useBrainSimulation(
     if (linkForce) linkForce.links(linksRef.current);
   }, []);
 
+  /** D3 enter/update/exit — creates and updates SVG elements from data arrays */
+  const renderElements = useCallback(() => {
+    const svgEl = svgRef.current;
+    if (!svgEl) return;
+
+    const svg = d3.select(svgEl);
+    const linkGroup = svg.select<SVGGElement>(".zoom-group .links");
+    const nodeGroup = svg.select<SVGGElement>(".zoom-group .nodes");
+    const labelGroup = svg.select<SVGGElement>(".zoom-group .labels");
+
+    // --- Links ---
+    linkGroup
+      .selectAll<SVGLineElement, GraphLink>("line")
+      .data(linksRef.current, (d) => `${linkId(d.source)}-${linkId(d.target)}`)
+      .join(
+        (enter) =>
+          enter
+            .append("line")
+            .attr("class", (d) => {
+              const classes = ["link"];
+              if (d.type === "spine") classes.push("link-spine");
+              else if (d.type === "source-to-stage") classes.push("link-source-to-stage");
+              else if (d.type === "concept-to-source") classes.push("link-concept-to-source");
+              return classes.join(" ");
+            })
+            .attr("stroke-opacity", 0)
+            .transition()
+            .duration(300)
+            .attr("stroke-opacity", 1),
+        (update) => update,
+        (exit) => exit.transition().duration(200).attr("stroke-opacity", 0).remove(),
+      );
+
+    // --- Nodes ---
+    const stageColor = "hsl(210, 60%, 50%)";
+    const stageActiveColor = "hsl(210, 80%, 60%)";
+    const stageCompleteColor = "hsl(142, 71%, 45%)";
+
+    // Stage nodes (circles)
+    nodeGroup
+      .selectAll<SVGCircleElement, GraphNode>("circle.node-stage")
+      .data(
+        nodesRef.current.filter((n) => n.type === "stage") as StageNodeData[],
+        (d) => d.id,
+      )
+      .join(
+        (enter) =>
+          enter
+            .append("circle")
+            .attr("class", "node node-stage")
+            .attr("r", 20)
+            .attr("fill", stageColor)
+            .attr("stroke", "rgba(255,255,255,0.3)")
+            .attr("stroke-width", 2)
+            .attr("cx", (d) => d.fx ?? 0)
+            .attr("cy", (d) => d.fy ?? 0),
+        (update) =>
+          update
+            .attr("fill", (d) => {
+              if (d.state === "active") return stageActiveColor;
+              if (d.state === "complete") return stageCompleteColor;
+              return stageColor;
+            })
+            .attr("class", (d) => {
+              const cls = ["node", "node-stage"];
+              if (d.state === "active") cls.push("pulse-fast");
+              return cls.join(" ");
+            }),
+        (exit) => exit.remove(),
+      );
+
+    // Source nodes (circles)
+    nodeGroup
+      .selectAll<SVGCircleElement, GraphNode>("circle.node-source")
+      .data(
+        nodesRef.current.filter((n) => n.type === "source") as SourceNodeData[],
+        (d) => d.id,
+      )
+      .join(
+        (enter) =>
+          enter
+            .append("circle")
+            .attr("class", "node node-source spawned")
+            .attr("r", (d) => d.radius)
+            .attr("fill", (d) => getContentColor(d.contentCategory))
+            .attr("fill-opacity", (d) => d.opacity)
+            .attr("stroke", "rgba(255,255,255,0.2)")
+            .attr("stroke-width", 1),
+        (update) => update,
+        (exit) => exit.transition().duration(200).attr("r", 0).remove(),
+      );
+
+    // Concept nodes (rects)
+    nodeGroup
+      .selectAll<SVGRectElement, GraphNode>("rect.node-concept")
+      .data(
+        nodesRef.current.filter((n) => n.type === "concept") as ConceptNodeData[],
+        (d) => d.id,
+      )
+      .join(
+        (enter) =>
+          enter
+            .append("rect")
+            .attr("class", "node node-concept bloomed")
+            .attr("width", 60)
+            .attr("height", 24)
+            .attr("rx", 6)
+            .attr("fill", "hsl(262, 60%, 30%)")
+            .attr("stroke", "hsl(262, 83%, 58%)")
+            .attr("stroke-width", 1),
+        (update) => update,
+        (exit) => exit.remove(),
+      );
+
+    // --- Labels ---
+    // Stage labels
+    labelGroup
+      .selectAll<SVGTextElement, GraphNode>("text.stage-label")
+      .data(
+        nodesRef.current.filter((n) => n.type === "stage") as StageNodeData[],
+        (d) => d.id,
+      )
+      .join(
+        (enter) =>
+          enter
+            .append("text")
+            .attr("class", "node-label stage-label")
+            .attr("font-size", "9px")
+            .attr("font-weight", "bold")
+            .text((d) => d.label),
+        (update) => update,
+        (exit) => exit.remove(),
+      );
+
+    // Concept labels
+    labelGroup
+      .selectAll<SVGTextElement, GraphNode>("text.concept-text-label")
+      .data(
+        nodesRef.current.filter((n) => n.type === "concept") as ConceptNodeData[],
+        (d) => d.id,
+      )
+      .join(
+        (enter) =>
+          enter
+            .append("text")
+            .attr("class", "concept-label concept-text-label")
+            .text((d) => {
+              const name = d.name;
+              return name.length > 10 ? name.slice(0, 9) + "…" : name;
+            }),
+        (update) => update,
+        (exit) => exit.remove(),
+      );
+  }, [svgRef]);
+
   const addStageNodes = useCallback(() => {
     const fyVal = dimensions.height * 0.3;
     const stages: StageNodeData[] = STAGE_DEFS.map((def) => ({
@@ -136,8 +292,9 @@ export function useBrainSimulation(
     linksRef.current.push(...spineLinks);
 
     updateSimulation();
+    renderElements();
     simulationRef.current?.alpha(0.3).restart();
-  }, [dimensions.width, dimensions.height, updateSimulation]);
+  }, [dimensions.width, dimensions.height, updateSimulation, renderElements]);
 
   const addSourceNode = useCallback(
     (source: EvaluatedSource) => {
@@ -188,9 +345,10 @@ export function useBrainSimulation(
       });
 
       updateSimulation();
+      renderElements();
       simulationRef.current?.alpha(0.3).restart();
     },
-    [updateSimulation]
+    [updateSimulation, renderElements]
   );
 
   const addConceptNodes = useCallback(
@@ -198,24 +356,31 @@ export function useBrainSimulation(
       nodesRef.current.push(...concepts);
       linksRef.current.push(...sourceLinks);
       updateSimulation();
+      renderElements();
       simulationRef.current?.alpha(0.5).restart();
     },
-    [updateSimulation]
+    [updateSimulation, renderElements]
   );
 
   const activateStage = useCallback((stage: string) => {
     const node = nodesRef.current.find(
       (n) => n.id === `stage-${stage}`
     ) as StageNodeData | undefined;
-    if (node) node.state = "active";
-  }, []);
+    if (node) {
+      node.state = "active";
+      renderElements();
+    }
+  }, [renderElements]);
 
   const completeStage = useCallback((stage: string) => {
     const node = nodesRef.current.find(
       (n) => n.id === `stage-${stage}`
     ) as StageNodeData | undefined;
-    if (node) node.state = "complete";
-  }, []);
+    if (node) {
+      node.state = "complete";
+      renderElements();
+    }
+  }, [renderElements]);
 
   const settle = useCallback(() => {
     simulationRef.current?.alphaTarget(0);
@@ -265,16 +430,25 @@ export function useBrainSimulation(
       })) as unknown as GraphNode[];
       linksRef.current = [...snapshot.links];
       updateSimulation();
+      renderElements();
       simulationRef.current?.alpha(0.01).restart();
     },
-    [updateSimulation]
+    [updateSimulation, renderElements]
   );
 
   const destroy = useCallback(() => {
     simulationRef.current?.stop();
     nodesRef.current = [];
     linksRef.current = [];
-  }, []);
+    // Clear SVG elements
+    const svgEl = svgRef.current;
+    if (svgEl) {
+      const svg = d3.select(svgEl);
+      svg.select(".zoom-group .links").selectAll("*").remove();
+      svg.select(".zoom-group .nodes").selectAll("*").remove();
+      svg.select(".zoom-group .labels").selectAll("*").remove();
+    }
+  }, [svgRef]);
 
   return {
     addStageNodes,

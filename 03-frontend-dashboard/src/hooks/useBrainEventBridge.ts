@@ -22,8 +22,9 @@ export function useBrainEventBridge(
   const snapshotTaken = useRef(false);
   const onSnapshotRef = useRef(onSnapshot);
   onSnapshotRef.current = onSnapshot;
+  const stagesInitialized = useRef(false);
 
-  // Reset refs when a new research run starts
+  // Reset refs when a new research run starts, and create stage nodes
   useEffect(() => {
     if (researchState.status === "loading") {
       processedSourceUrls.current.clear();
@@ -31,12 +32,23 @@ export function useBrainEventBridge(
       stagesActivated.current.clear();
       stagesCompleted.current.clear();
       snapshotTaken.current = false;
+      stagesInitialized.current = false;
       if (settleTimeoutId.current !== null) {
         clearTimeout(settleTimeoutId.current);
         settleTimeoutId.current = null;
       }
     }
-  }, [researchState.status]);
+
+    // Initialize stage nodes when research starts
+    if (
+      (researchState.status === "loading" || researchState.status === "streaming") &&
+      simulation &&
+      !stagesInitialized.current
+    ) {
+      stagesInitialized.current = true;
+      simulation.addStageNodes();
+    }
+  }, [researchState.status, simulation]);
 
   // Stage detection effect
   useEffect(() => {
