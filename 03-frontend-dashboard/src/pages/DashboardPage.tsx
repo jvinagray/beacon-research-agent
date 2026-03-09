@@ -122,6 +122,28 @@ const DashboardPage = () => {
 
   const drillDown = useDrillDown(researchState?.sessionId ?? null);
 
+  const handleBrainNodeClick = useCallback(
+    (nodeType: "stage" | "source" | "concept", nodeId: string) => {
+      switch (nodeType) {
+        case "stage":
+          if (nodeId === "stage-search" || nodeId === "stage-evaluate") {
+            setActiveTab("sources");
+          } else if (nodeId === "stage-synthesize") {
+            setActiveTab("summary");
+          }
+          // stage-extract: no tab change
+          break;
+        case "concept":
+          setActiveTab("concept-map");
+          break;
+        case "source":
+          // source clicks open URL directly in BrainGraph, no tab change needed
+          break;
+      }
+    },
+    [],
+  );
+
   const handleDrillDown = useCallback((concept: string, parentId?: string) => {
     const status = drillDown.startDrillDown(concept, parentId);
     if (status === "max-depth") {
