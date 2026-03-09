@@ -27,6 +27,24 @@ const mockSimulation = {
   links: vi.fn().mockReturnThis(),
 };
 
+/** Create a chainable D3 selection mock that supports the full join pattern */
+function mockSelection(): any {
+  const sel: any = {
+    select: vi.fn(() => mockSelection()),
+    selectAll: vi.fn(() => mockSelection()),
+    data: vi.fn(() => mockSelection()),
+    join: vi.fn(() => mockSelection()),
+    enter: vi.fn(() => mockSelection()),
+    append: vi.fn(() => mockSelection()),
+    attr: vi.fn(() => sel),
+    text: vi.fn(() => sel),
+    transition: vi.fn(() => sel),
+    duration: vi.fn(() => sel),
+    remove: vi.fn(() => sel),
+  };
+  return sel;
+}
+
 vi.mock("d3", () => ({
   forceSimulation: vi.fn(() => mockSimulation),
   forceLink: vi.fn(() => mockLinkForce),
@@ -34,11 +52,7 @@ vi.mock("d3", () => ({
   forceCollide: vi.fn(() => ({})),
   forceCenter: vi.fn(() => ({})),
   forceY: vi.fn(() => ({ strength: vi.fn().mockReturnValue({}) })),
-  select: vi.fn(() => ({
-    selectAll: vi.fn().mockReturnValue({
-      attr: vi.fn().mockReturnThis(),
-    }),
-  })),
+  select: vi.fn(() => mockSelection()),
 }));
 
 function makeSource(overrides?: Partial<EvaluatedSource>): EvaluatedSource {
