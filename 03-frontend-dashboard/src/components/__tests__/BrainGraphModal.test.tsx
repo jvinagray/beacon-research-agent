@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { BrainGraphModal } from "@/components/BrainGraphModal";
 import type { SerializedGraphSnapshot } from "@/types/brain-graph";
 
@@ -62,8 +62,10 @@ describe("BrainGraphModal", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it("passes snapshot to useBrainSimulation.initFromSnapshot", () => {
+  it("passes snapshot to useBrainSimulation.initFromSnapshot", async () => {
     render(<BrainGraphModal isOpen={true} onClose={vi.fn()} snapshot={snapshot} />);
-    expect(mockInitFromSnapshot).toHaveBeenCalledWith(snapshot);
+    await waitFor(() => {
+      expect(mockInitFromSnapshot).toHaveBeenCalledWith(snapshot);
+    });
   });
 });

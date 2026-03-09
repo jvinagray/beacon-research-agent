@@ -56,21 +56,27 @@ export function useBrainSimulation(
         d3
           .forceLink<GraphNode, GraphLink>(linksRef.current)
           .id((d) => d.id)
+          .distance((d) => {
+            if (d.type === "spine") return 100;
+            if (d.type === "source-to-stage") return 80;
+            if (d.type === "concept-to-source") return 60;
+            return 50;
+          })
       )
-      .force("charge", d3.forceManyBody().strength(-150))
+      .force("charge", d3.forceManyBody().strength(-300))
       .force(
         "collide",
         d3.forceCollide<GraphNode>((d) =>
           (d as SourceNodeData).radius
-            ? (d as SourceNodeData).radius + 4
-            : 24
+            ? (d as SourceNodeData).radius + 6
+            : 28
         )
       )
       .force(
         "center",
         d3.forceCenter(dimensions.width / 2, dimensions.height / 2)
       )
-      .force("y", d3.forceY(dimensions.height * 0.6).strength(0.05))
+      .force("y", d3.forceY(dimensions.height * 0.55).strength(0.04))
       .on("tick", () => {
         if (!svgRef.current) return;
         const svg = d3.select(svgRef.current);
@@ -92,8 +98,15 @@ export function useBrainSimulation(
           .attr("x2", (d) => ((d.target as unknown as GraphNode).x ?? 0))
           .attr("y2", (d) => ((d.target as unknown as GraphNode).y ?? 0));
 
+        // Stage labels
         svg
           .selectAll<SVGTextElement, GraphNode>(".node-label")
+          .attr("x", (d) => d.x ?? 0)
+          .attr("y", (d) => (d.y ?? 0) + 4);
+
+        // Concept labels
+        svg
+          .selectAll<SVGTextElement, GraphNode>(".concept-text-label")
           .attr("x", (d) => d.x ?? 0)
           .attr("y", (d) => (d.y ?? 0) + 4);
       });
@@ -167,8 +180,8 @@ export function useBrainSimulation(
             .attr("fill", stageColor)
             .attr("stroke", "rgba(255,255,255,0.3)")
             .attr("stroke-width", 2)
-            .attr("cx", (d) => d.fx ?? 0)
-            .attr("cy", (d) => d.fy ?? 0),
+            .attr("cx", (d) => d.fx ?? d.x ?? 0)
+            .attr("cy", (d) => d.fy ?? d.y ?? 0),
         (update) =>
           update
             .attr("fill", (d) => {
@@ -198,9 +211,11 @@ export function useBrainSimulation(
             .attr("class", "node node-source spawned")
             .attr("r", (d) => d.radius)
             .attr("fill", (d) => getContentColor(d.contentCategory))
-            .attr("fill-opacity", (d) => d.opacity)
+            .attr("fill-opacity", (d) => d.opacity ?? 1)
             .attr("stroke", "rgba(255,255,255,0.2)")
-            .attr("stroke-width", 1),
+            .attr("stroke-width", 1)
+            .attr("cx", (d) => d.x ?? 0)
+            .attr("cy", (d) => d.y ?? 0),
         (update) => update,
         (exit) => exit.transition().duration(200).attr("r", 0).remove(),
       );
@@ -222,7 +237,9 @@ export function useBrainSimulation(
             .attr("rx", 6)
             .attr("fill", "hsl(262, 60%, 30%)")
             .attr("stroke", "hsl(262, 83%, 58%)")
-            .attr("stroke-width", 1),
+            .attr("stroke-width", 1)
+            .attr("x", (d) => (d.x ?? 0) - 30)
+            .attr("y", (d) => (d.y ?? 0) - 12),
         (update) => update,
         (exit) => exit.remove(),
       );
@@ -242,6 +259,8 @@ export function useBrainSimulation(
             .attr("class", "node-label stage-label")
             .attr("font-size", "9px")
             .attr("font-weight", "bold")
+            .attr("x", (d) => d.fx ?? d.x ?? 0)
+            .attr("y", (d) => (d.fy ?? d.y ?? 0) + 4)
             .text((d) => d.label),
         (update) => update,
         (exit) => exit.remove(),
@@ -259,9 +278,11 @@ export function useBrainSimulation(
           enter
             .append("text")
             .attr("class", "concept-label concept-text-label")
+            .attr("x", (d) => d.x ?? 0)
+            .attr("y", (d) => (d.y ?? 0) + 4)
             .text((d) => {
               const name = d.name;
-              return name.length > 10 ? name.slice(0, 9) + "…" : name;
+              return name.length > 10 ? name.slice(0, 9) + "\u2026" : name;
             }),
         (update) => update,
         (exit) => exit.remove(),
@@ -431,7 +452,8 @@ export function useBrainSimulation(
       linksRef.current = [...snapshot.links];
       updateSimulation();
       renderElements();
-      simulationRef.current?.alpha(0.01).restart();
+      // Use a higher alpha so the tick handler fires enough to position everything
+      simulationRef.current?.alpha(0.3).restart();
     },
     [updateSimulation, renderElements]
   );

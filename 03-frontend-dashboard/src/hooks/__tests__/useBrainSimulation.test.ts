@@ -6,6 +6,7 @@ import type { EvaluatedSource } from "@/types/research";
 const mockLinkForce = {
   links: vi.fn().mockReturnThis(),
   id: vi.fn().mockReturnThis(),
+  distance: vi.fn().mockReturnThis(),
 };
 
 const mockSimulation = {

@@ -104,10 +104,14 @@ export function BrainGraphModal({
   }, [isOpen]);
 
   // Consolidated init/destroy lifecycle
+  // Use requestAnimationFrame to ensure Radix Dialog portal has rendered the SVG
   useEffect(() => {
     if (!isOpen) return;
-    sim.initFromSnapshot(snapshot);
+    const rafId = requestAnimationFrame(() => {
+      sim.initFromSnapshot(snapshot);
+    });
     return () => {
+      cancelAnimationFrame(rafId);
       sim.destroy();
     };
   }, [isOpen, snapshot, sim.initFromSnapshot, sim.destroy]);
