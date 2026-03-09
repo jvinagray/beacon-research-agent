@@ -1,4 +1,5 @@
 import type { ResearchState, EvaluatedSource } from '../types/research';
+import type { SerializedGraphSnapshot } from '../types/brain-graph';
 
 export interface PreparedRouterState {
   topic: string;
@@ -7,9 +8,13 @@ export interface PreparedRouterState {
   artifacts: Record<string, string | object>;
   sessionId: string | null;
   sourceTotal: number;
+  brainGraphSnapshot?: SerializedGraphSnapshot;
 }
 
-export function prepareRouterState(state: ResearchState): PreparedRouterState {
+export function prepareRouterState(
+  state: ResearchState,
+  brainGraphSnapshot?: SerializedGraphSnapshot,
+): PreparedRouterState {
   return {
     topic: state.topic,
     depth: state.depth,
@@ -17,5 +22,6 @@ export function prepareRouterState(state: ResearchState): PreparedRouterState {
     artifacts: state.artifacts,
     sessionId: state.sessionId,
     sourceTotal: state.sourceTotal,
+    brainGraphSnapshot,
   };
 }
