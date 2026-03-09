@@ -11,7 +11,6 @@ import type {
 import type { EvaluatedSource } from "@/types/research";
 import {
   mapContentType,
-  getContentColor,
   computeSourceRadius,
   computeSourceOpacity,
 } from "@/lib/brain-graph-utils";
@@ -36,6 +35,35 @@ const STAGE_DEFS: Array<{
   { id: "stage-synthesize", label: "SYNTHESIZE", fxRatio: 0.85 },
 ];
 
+/** Resolve the SVG filter/gradient ID prefix from the defs in the SVG */
+function getIdPrefix(svgEl: SVGSVGElement): string {
+  // The BrainGraph component uses useId() and strips colons
+  // Find any gradient/filter that starts with a known suffix
+  const defs = svgEl.querySelector("defs");
+  if (!defs) return "";
+  const firstGrad = defs.querySelector("[id$='-grad-academic']");
+  if (firstGrad) {
+    return firstGrad.id.replace("-grad-academic", "");
+  }
+  const firstFilter = defs.querySelector("[id$='-stage-glow-idle']");
+  if (firstFilter) {
+    return firstFilter.id.replace("-stage-glow-idle", "");
+  }
+  return "";
+}
+
+/** Map content category to gradient ID */
+function getGradientUrl(prefix: string, category: string): string {
+  const map: Record<string, string> = {
+    academic: "grad-academic",
+    news: "grad-news",
+    docs: "grad-docs",
+    media: "grad-media",
+    other: "grad-other",
+  };
+  return `url(#${prefix}-${map[category] ?? "grad-other"})`;
+}
+
 export function useBrainSimulation(
   svgRef: RefObject<SVGSVGElement | null>,
   dimensions: { width: number; height: number }
@@ -57,26 +85,26 @@ export function useBrainSimulation(
           .forceLink<GraphNode, GraphLink>(linksRef.current)
           .id((d) => d.id)
           .distance((d) => {
-            if (d.type === "spine") return 100;
-            if (d.type === "source-to-stage") return 80;
-            if (d.type === "concept-to-source") return 60;
-            return 50;
+            if (d.type === "spine") return 120;
+            if (d.type === "source-to-stage") return 100;
+            if (d.type === "concept-to-source") return 70;
+            return 60;
           })
       )
-      .force("charge", d3.forceManyBody().strength(-300))
+      .force("charge", d3.forceManyBody().strength(-400))
       .force(
         "collide",
         d3.forceCollide<GraphNode>((d) =>
           (d as SourceNodeData).radius
-            ? (d as SourceNodeData).radius + 6
-            : 28
+            ? (d as SourceNodeData).radius + 8
+            : 30
         )
       )
       .force(
         "center",
         d3.forceCenter(dimensions.width / 2, dimensions.height / 2)
       )
-      .force("y", d3.forceY(dimensions.height * 0.55).strength(0.04))
+      .force("y", d3.forceY(dimensions.height * 0.55).strength(0.03))
       .on("tick", () => {
         if (!svgRef.current) return;
         const svg = d3.select(svgRef.current);
@@ -86,10 +114,16 @@ export function useBrainSimulation(
           .attr("cx", (d) => d.x ?? 0)
           .attr("cy", (d) => d.y ?? 0);
 
+        // Pulse rings follow stage nodes
+        svg
+          .selectAll<SVGCircleElement, GraphNode>(".pulse-ring")
+          .attr("cx", (d) => d.x ?? 0)
+          .attr("cy", (d) => d.y ?? 0);
+
         svg
           .selectAll<SVGRectElement, GraphNode>(".node-concept")
-          .attr("x", (d) => (d.x ?? 0) - 30)
-          .attr("y", (d) => (d.y ?? 0) - 12);
+          .attr("x", (d) => (d.x ?? 0) - 32)
+          .attr("y", (d) => (d.y ?? 0) - 11);
 
         svg
           .selectAll<SVGLineElement, GraphLink>(".link")
@@ -108,7 +142,7 @@ export function useBrainSimulation(
         svg
           .selectAll<SVGTextElement, GraphNode>(".concept-text-label")
           .attr("x", (d) => d.x ?? 0)
-          .attr("y", (d) => (d.y ?? 0) + 4);
+          .attr("y", (d) => (d.y ?? 0) + 1);
       });
 
     simulationRef.current = sim;
@@ -131,6 +165,7 @@ export function useBrainSimulation(
     const svgEl = svgRef.current;
     if (!svgEl) return;
 
+    const prefix = getIdPrefix(svgEl);
     const svg = d3.select(svgEl);
     const linkGroup = svg.select<SVGGElement>(".zoom-group .links");
     const nodeGroup = svg.select<SVGGElement>(".zoom-group .nodes");
@@ -151,95 +186,130 @@ export function useBrainSimulation(
               else if (d.type === "concept-to-source") classes.push("link-concept-to-source");
               return classes.join(" ");
             })
+            .attr("filter", (d) => d.type === "spine" ? `url(#${prefix}-link-glow)` : null)
             .attr("stroke-opacity", 0)
             .transition()
-            .duration(300)
+            .duration(400)
             .attr("stroke-opacity", 1),
         (update) => update,
         (exit) => exit.transition().duration(200).attr("stroke-opacity", 0).remove(),
       );
 
     // --- Nodes ---
-    const stageColor = "hsl(210, 60%, 50%)";
-    const stageActiveColor = "hsl(210, 80%, 60%)";
-    const stageCompleteColor = "hsl(142, 71%, 45%)";
+    const stageNodes = nodesRef.current.filter((n) => n.type === "stage") as StageNodeData[];
+    const sourceNodes = nodesRef.current.filter((n) => n.type === "source") as SourceNodeData[];
+    const conceptNodes = nodesRef.current.filter((n) => n.type === "concept") as ConceptNodeData[];
 
-    // Stage nodes (circles)
+    // Stage nodes (circles with gradient fills and glow)
     nodeGroup
-      .selectAll<SVGCircleElement, GraphNode>("circle.node-stage")
-      .data(
-        nodesRef.current.filter((n) => n.type === "stage") as StageNodeData[],
-        (d) => d.id,
-      )
+      .selectAll<SVGCircleElement, StageNodeData>("circle.node-stage")
+      .data(stageNodes, (d) => d.id)
       .join(
         (enter) =>
           enter
             .append("circle")
-            .attr("class", "node node-stage")
-            .attr("r", 20)
-            .attr("fill", stageColor)
-            .attr("stroke", "rgba(255,255,255,0.3)")
-            .attr("stroke-width", 2)
+            .attr("class", "node node-stage node-stage-idle")
+            .attr("r", 18)
+            .attr("fill", `url(#${prefix}-stage-idle)`)
+            .attr("stroke", "rgba(100, 180, 255, 0.4)")
+            .attr("stroke-width", 1.5)
+            .attr("filter", `url(#${prefix}-stage-glow-idle)`)
             .attr("cx", (d) => d.fx ?? d.x ?? 0)
             .attr("cy", (d) => d.fy ?? d.y ?? 0),
         (update) =>
           update
             .attr("fill", (d) => {
-              if (d.state === "active") return stageActiveColor;
-              if (d.state === "complete") return stageCompleteColor;
-              return stageColor;
+              if (d.state === "active") return `url(#${prefix}-stage-active)`;
+              if (d.state === "complete") return `url(#${prefix}-stage-complete)`;
+              return `url(#${prefix}-stage-idle)`;
+            })
+            .attr("stroke", (d) => {
+              if (d.state === "active") return "rgba(100, 200, 255, 0.7)";
+              if (d.state === "complete") return "rgba(100, 255, 180, 0.5)";
+              return "rgba(100, 180, 255, 0.4)";
+            })
+            .attr("filter", (d) => {
+              if (d.state === "active") return `url(#${prefix}-stage-glow-active)`;
+              if (d.state === "complete") return `url(#${prefix}-stage-glow-complete)`;
+              return `url(#${prefix}-stage-glow-idle)`;
             })
             .attr("class", (d) => {
               const cls = ["node", "node-stage"];
-              if (d.state === "active") cls.push("pulse-fast");
+              if (d.state === "idle") cls.push("node-stage-idle");
+              else if (d.state === "active") cls.push("node-stage-active");
+              else if (d.state === "complete") cls.push("node-stage-complete");
               return cls.join(" ");
             }),
         (exit) => exit.remove(),
       );
 
-    // Source nodes (circles)
+    // Pulse rings for active stages
     nodeGroup
-      .selectAll<SVGCircleElement, GraphNode>("circle.node-source")
-      .data(
-        nodesRef.current.filter((n) => n.type === "source") as SourceNodeData[],
-        (d) => d.id,
-      )
+      .selectAll<SVGCircleElement, StageNodeData>("circle.pulse-ring")
+      .data(stageNodes.filter((s) => s.state === "active"), (d) => `ring-${d.id}`)
+      .join(
+        (enter) =>
+          enter
+            .append("circle")
+            .attr("class", "pulse-ring")
+            .attr("r", 24)
+            .attr("fill", "none")
+            .attr("stroke", "rgba(100, 200, 255, 0.5)")
+            .attr("stroke-width", 1.5)
+            .attr("cx", (d) => d.fx ?? d.x ?? 0)
+            .attr("cy", (d) => d.fy ?? d.y ?? 0),
+        (update) => update,
+        (exit) => exit.remove(),
+      );
+
+    // Source nodes (circles with radial gradients and glow)
+    nodeGroup
+      .selectAll<SVGCircleElement, SourceNodeData>("circle.node-source")
+      .data(sourceNodes, (d) => d.id)
       .join(
         (enter) =>
           enter
             .append("circle")
             .attr("class", "node node-source spawned")
             .attr("r", (d) => d.radius)
-            .attr("fill", (d) => getContentColor(d.contentCategory))
+            .attr("fill", (d) => getGradientUrl(prefix, d.contentCategory))
             .attr("fill-opacity", (d) => d.opacity ?? 1)
-            .attr("stroke", "rgba(255,255,255,0.2)")
+            .attr("stroke", (d) => {
+              const colors: Record<string, string> = {
+                academic: "rgba(100, 160, 255, 0.4)",
+                news: "rgba(255, 180, 80, 0.4)",
+                docs: "rgba(80, 220, 150, 0.4)",
+                media: "rgba(180, 120, 255, 0.4)",
+                other: "rgba(150, 160, 170, 0.3)",
+              };
+              return colors[d.contentCategory] ?? colors.other;
+            })
             .attr("stroke-width", 1)
+            .attr("filter", `url(#${prefix}-orb-glow)`)
             .attr("cx", (d) => d.x ?? 0)
             .attr("cy", (d) => d.y ?? 0),
         (update) => update,
-        (exit) => exit.transition().duration(200).attr("r", 0).remove(),
+        (exit) => exit.transition().duration(200).attr("r", 0).attr("opacity", 0).remove(),
       );
 
-    // Concept nodes (rects)
+    // Concept nodes (rounded rects with gradient and glow)
     nodeGroup
-      .selectAll<SVGRectElement, GraphNode>("rect.node-concept")
-      .data(
-        nodesRef.current.filter((n) => n.type === "concept") as ConceptNodeData[],
-        (d) => d.id,
-      )
+      .selectAll<SVGRectElement, ConceptNodeData>("rect.node-concept")
+      .data(conceptNodes, (d) => d.id)
       .join(
         (enter) =>
           enter
             .append("rect")
             .attr("class", "node node-concept bloomed")
-            .attr("width", 60)
-            .attr("height", 24)
-            .attr("rx", 6)
-            .attr("fill", "hsl(262, 60%, 30%)")
-            .attr("stroke", "hsl(262, 83%, 58%)")
+            .attr("width", 64)
+            .attr("height", 22)
+            .attr("rx", 11)
+            .attr("fill", `url(#${prefix}-concept-fill)`)
+            .attr("stroke", "rgba(180, 130, 255, 0.45)")
             .attr("stroke-width", 1)
-            .attr("x", (d) => (d.x ?? 0) - 30)
-            .attr("y", (d) => (d.y ?? 0) - 12),
+            .attr("filter", `url(#${prefix}-concept-glow)`)
+            .attr("x", (d) => (d.x ?? 0) - 32)
+            .attr("y", (d) => (d.y ?? 0) - 11),
         (update) => update,
         (exit) => exit.remove(),
       );
@@ -247,18 +317,14 @@ export function useBrainSimulation(
     // --- Labels ---
     // Stage labels
     labelGroup
-      .selectAll<SVGTextElement, GraphNode>("text.stage-label")
-      .data(
-        nodesRef.current.filter((n) => n.type === "stage") as StageNodeData[],
-        (d) => d.id,
-      )
+      .selectAll<SVGTextElement, StageNodeData>("text.stage-label")
+      .data(stageNodes, (d) => d.id)
       .join(
         (enter) =>
           enter
             .append("text")
             .attr("class", "node-label stage-label")
-            .attr("font-size", "9px")
-            .attr("font-weight", "bold")
+            .attr("filter", `url(#${prefix}-text-glow)`)
             .attr("x", (d) => d.fx ?? d.x ?? 0)
             .attr("y", (d) => (d.fy ?? d.y ?? 0) + 4)
             .text((d) => d.label),
@@ -268,21 +334,18 @@ export function useBrainSimulation(
 
     // Concept labels
     labelGroup
-      .selectAll<SVGTextElement, GraphNode>("text.concept-text-label")
-      .data(
-        nodesRef.current.filter((n) => n.type === "concept") as ConceptNodeData[],
-        (d) => d.id,
-      )
+      .selectAll<SVGTextElement, ConceptNodeData>("text.concept-text-label")
+      .data(conceptNodes, (d) => d.id)
       .join(
         (enter) =>
           enter
             .append("text")
             .attr("class", "concept-label concept-text-label")
             .attr("x", (d) => d.x ?? 0)
-            .attr("y", (d) => (d.y ?? 0) + 4)
+            .attr("y", (d) => (d.y ?? 0) + 1)
             .text((d) => {
               const name = d.name;
-              return name.length > 10 ? name.slice(0, 9) + "\u2026" : name;
+              return name.length > 9 ? name.slice(0, 8) + "\u2026" : name;
             }),
         (update) => update,
         (exit) => exit.remove(),
@@ -343,7 +406,6 @@ export function useBrainSimulation(
           n.score < min.score ? n : min
         );
         if (score > lowest.score) {
-          // Remove lowest and its link (handle D3-resolved object refs)
           nodesRef.current = nodesRef.current.filter(
             (n) => n.id !== lowest.id
           );
@@ -452,7 +514,6 @@ export function useBrainSimulation(
       linksRef.current = [...snapshot.links];
       updateSimulation();
       renderElements();
-      // Use a higher alpha so the tick handler fires enough to position everything
       simulationRef.current?.alpha(0.3).restart();
     },
     [updateSimulation, renderElements]
@@ -462,7 +523,6 @@ export function useBrainSimulation(
     simulationRef.current?.stop();
     nodesRef.current = [];
     linksRef.current = [];
-    // Clear SVG elements
     const svgEl = svgRef.current;
     if (svgEl) {
       const svg = d3.select(svgEl);
