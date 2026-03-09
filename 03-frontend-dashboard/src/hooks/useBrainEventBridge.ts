@@ -99,10 +99,10 @@ export function useBrainEventBridge(
     const conceptMap = researchState.artifacts.concept_map;
     if (!conceptMap || typeof conceptMap !== "string") return;
 
-    const concepts = extractConcepts(conceptMap);
-    if (concepts.length === 0) return;
+    const conceptNames = extractConcepts(conceptMap);
+    if (conceptNames.length === 0) return;
 
-    const edges = buildConceptSourceEdges(concepts, researchState.sources);
+    const { concepts, edges } = buildConceptSourceEdges(conceptNames, researchState.sources);
     simulation.addConceptNodes(concepts, edges);
     conceptsAdded.current = true;
   }, [researchState.artifacts, researchState.sources, simulation]);
