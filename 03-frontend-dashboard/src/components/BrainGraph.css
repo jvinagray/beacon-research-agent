@@ -1,0 +1,125 @@
+.brain-graph-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  width: 100%;
+  height: 100%;
+}
+
+.brain-graph-container.glass-morphism {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.brain-graph-container.minimized {
+  width: 200px;
+  height: 150px;
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 50;
+}
+
+.brain-graph-control {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 4px;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.brain-graph-control:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* Node spawn animation */
+.node-source {
+  transform-origin: center;
+  transform: scale(0);
+  transition: transform 300ms ease-out;
+}
+
+.node-source.spawned {
+  transform: scale(1);
+}
+
+/* Stage node pulse animations */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes pulse-fast {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1.0; }
+}
+
+.pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+.pulse-fast {
+  animation: pulse-fast 0.8s ease-in-out infinite;
+}
+
+/* Link styles */
+.link {
+  stroke: rgba(255, 255, 255, 0.2);
+  fill: none;
+}
+
+.link-spine {
+  stroke-width: 3;
+}
+
+.link-source-to-stage {
+  stroke-width: 1;
+}
+
+.link-concept-to-source {
+  stroke-width: 1;
+  stroke-dasharray: 4, 4;
+}
+
+/* Node labels */
+.node-label {
+  fill: rgba(255, 255, 255, 0.9);
+  font-size: 10px;
+  text-anchor: middle;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Concept node bloom animation */
+.node-concept {
+  transform-origin: center;
+  transform: scale(0);
+  opacity: 0;
+  transition: transform 300ms ease-out, opacity 300ms ease-out;
+}
+
+.node-concept.bloomed {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Concept node text */
+.concept-label {
+  fill: var(--foreground, #fff);
+  font-size: 11px;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  user-select: none;
+}
