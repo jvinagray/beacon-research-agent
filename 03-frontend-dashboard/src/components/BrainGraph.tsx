@@ -234,16 +234,16 @@ export function BrainGraph({
 
           {/* Grid pattern */}
           <pattern id={`${p}-grid`} width="30" height="30" patternUnits="userSpaceOnUse">
-            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(80,140,255,0.12)" strokeWidth="0.3" />
+            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(45,212,170,0.10)" strokeWidth="0.3" />
           </pattern>
 
-          {/* Scan gradient */}
+          {/* Scan gradient — uses app teal */}
           <linearGradient id={`${p}-scan`} x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="rgba(80,160,255,0)" />
-            <stop offset="45%" stopColor="rgba(80,160,255,0.04)" />
-            <stop offset="50%" stopColor="rgba(80,160,255,0.08)" />
-            <stop offset="55%" stopColor="rgba(80,160,255,0.04)" />
-            <stop offset="100%" stopColor="rgba(80,160,255,0)" />
+            <stop offset="0%" stopColor="rgba(45,212,170,0)" />
+            <stop offset="45%" stopColor="rgba(45,212,170,0.03)" />
+            <stop offset="50%" stopColor="rgba(45,212,170,0.06)" />
+            <stop offset="55%" stopColor="rgba(45,212,170,0.03)" />
+            <stop offset="100%" stopColor="rgba(45,212,170,0)" />
           </linearGradient>
         </defs>
 

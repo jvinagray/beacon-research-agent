@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Brain, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +44,7 @@ function hydrateSnapshotNodes(
         return {
           id: n.id,
           type: "source" as const,
-          url: n.id, // source node IDs are URLs
+          url: n.id,
           title: n.title ?? "",
           score: n.score ?? 0,
           contentCategory: n.contentCategory ?? "other",
@@ -80,7 +81,6 @@ export function BrainGraphModal({
 
   const sim = useBrainSimulation(svgRef, dimensions);
 
-  // Measure container dimensions when dialog opens
   useEffect(() => {
     if (!isOpen || !containerRef.current) return;
 
@@ -91,9 +91,7 @@ export function BrainGraphModal({
       }
     };
 
-    // Measure after dialog animation settles
     const timer = setTimeout(measure, 100);
-
     const observer = new ResizeObserver(measure);
     if (containerRef.current) observer.observe(containerRef.current);
 
@@ -103,8 +101,6 @@ export function BrainGraphModal({
     };
   }, [isOpen]);
 
-  // Consolidated init/destroy lifecycle
-  // Use requestAnimationFrame to ensure Radix Dialog portal has rendered the SVG
   useEffect(() => {
     if (!isOpen) return;
     const rafId = requestAnimationFrame(() => {
@@ -117,17 +113,37 @@ export function BrainGraphModal({
   }, [isOpen, snapshot, sim.initFromSnapshot, sim.destroy]);
 
   const hydratedNodes = hydrateSnapshotNodes(snapshot.nodes);
+  const sourceCount = snapshot.nodes.filter((n) => n.type === "source").length;
+  const conceptCount = snapshot.nodes.filter((n) => n.type === "concept").length;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-[80vw] h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Brain Graph</DialogTitle>
-          <DialogDescription className="sr-only">
-            Interactive brain graph visualization showing research connections
-          </DialogDescription>
+      <DialogContent className="max-w-[85vw] h-[85vh] flex flex-col p-0 gap-0 border-primary/15 bg-card/95 backdrop-blur-xl overflow-hidden">
+        {/* JARVIS-style header */}
+        <DialogHeader className="px-5 py-3 border-b border-primary/10 bg-card/80 flex-row items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: "3s" }} />
+              <Brain size={18} className="relative text-primary" />
+            </div>
+            <div>
+              <DialogTitle className="text-sm font-semibold tracking-wide">
+                Research Brain
+              </DialogTitle>
+              <DialogDescription className="text-[11px] text-muted-foreground">
+                {sourceCount} sources · {conceptCount} concepts · {snapshot.linkCount} connections
+              </DialogDescription>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-primary/60 font-mono uppercase tracking-wider">
+              Click nodes to navigate
+            </span>
+          </div>
         </DialogHeader>
-        <div ref={containerRef} className="flex-1 min-h-0">
+
+        {/* Graph area */}
+        <div ref={containerRef} className="flex-1 min-h-0 relative">
           <BrainGraph
             svgRef={svgRef}
             minimized={false}
@@ -137,6 +153,21 @@ export function BrainGraphModal({
             links={snapshot.links}
             onNodeClick={onNodeClick}
           />
+
+          {/* Corner stats */}
+          <div className="absolute bottom-4 left-4 flex items-center gap-3 px-3 py-1.5 rounded-lg glass border-primary/10 text-[10px] text-muted-foreground">
+            <span>
+              <span className="font-mono text-primary">{sourceCount}</span> sources
+            </span>
+            <span className="text-muted-foreground/30">|</span>
+            <span>
+              <span className="font-mono text-primary">{conceptCount}</span> concepts
+            </span>
+            <span className="text-muted-foreground/30">|</span>
+            <span>
+              <span className="font-mono text-primary">{snapshot.linkCount}</span> edges
+            </span>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

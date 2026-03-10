@@ -45,7 +45,7 @@ describe("BrainGraphModal", () => {
   it("opens when isOpen is true", () => {
     render(<BrainGraphModal isOpen={true} onClose={vi.fn()} snapshot={snapshot} />);
     expect(screen.getByRole("dialog")).toBeDefined();
-    expect(screen.getByText("Brain Graph")).toBeDefined();
+    expect(screen.getByText("Research Brain")).toBeDefined();
   });
 
   it("does not render dialog content when isOpen is false", () => {

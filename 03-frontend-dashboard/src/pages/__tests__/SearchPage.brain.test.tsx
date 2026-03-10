@@ -26,10 +26,6 @@ vi.mock("react-router-dom", async () => {
 vi.mock("@/components/BrainGraph", () => ({
   BrainGraph: (props: Record<string, unknown>) => <div data-testid="brain-graph" {...props} />,
 }));
-vi.mock("@/components/BrainDashboard", () => ({
-  BrainDashboard: (props: Record<string, unknown>) => <div data-testid="brain-dashboard"><div data-testid="brain-graph" /></div>,
-}));
-vi.mock("@/components/BrainDashboard.css", () => ({}));
 vi.mock("@/hooks/useBrainSimulation", () => ({
   useBrainSimulation: () => ({
     addStageNodes: vi.fn(),
@@ -137,15 +133,12 @@ describe("SearchPage brain graph integration", () => {
 
     renderSearchPage();
 
-    // The bridge should have captured the onSnapshot callback
     expect(capturedOnSnapshot).toBeDefined();
 
-    // Fire the snapshot callback inside act to trigger state update + navigation
     act(() => {
       capturedOnSnapshot!(snapshotData);
     });
 
-    // Navigation should have been called with snapshot in state
     expect(mockNavigate).toHaveBeenCalledWith(
       "/dashboard",
       expect.objectContaining({
