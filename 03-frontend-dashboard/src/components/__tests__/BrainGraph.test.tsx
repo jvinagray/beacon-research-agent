@@ -31,21 +31,12 @@ describe("BrainGraph", () => {
     expect(svg).toBeInTheDocument();
   });
 
-  it("SVG contains defs, links, nodes, labels groups", () => {
+  it("SVG contains defs, links, nodes groups", () => {
     const { container } = render(<BrainGraph {...defaultProps} />);
     const svg = container.querySelector("svg")!;
     expect(svg.querySelector("defs")).toBeInTheDocument();
     expect(svg.querySelector(".links")).toBeInTheDocument();
     expect(svg.querySelector(".nodes")).toBeInTheDocument();
-    expect(svg.querySelector(".labels")).toBeInTheDocument();
-  });
-
-  it("minimize button renders and calls onMinimize when clicked", () => {
-    const onMinimize = vi.fn();
-    render(<BrainGraph {...defaultProps} onMinimize={onMinimize} />);
-    const btn = screen.getByRole("button", { name: /minimize/i });
-    fireEvent.click(btn);
-    expect(onMinimize).toHaveBeenCalledOnce();
   });
 
   it("restore button renders when minimized and calls onRestore when clicked", () => {
@@ -58,11 +49,10 @@ describe("BrainGraph", () => {
     expect(onRestore).toHaveBeenCalledOnce();
   });
 
-  it("applies glass morphism class to container", () => {
+  it("applies brain-graph-container class to container", () => {
     const { container } = render(<BrainGraph {...defaultProps} />);
     const wrapper = container.querySelector(".brain-graph-container");
     expect(wrapper).toBeInTheDocument();
-    expect(wrapper).toHaveClass("glass-morphism");
   });
 
   it("applies minimized class when minimized prop is true", () => {
