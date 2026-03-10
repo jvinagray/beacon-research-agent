@@ -83,12 +83,11 @@ export function useBrainSimulation(
     const cx = dimensions.width / 2;
     const cy = dimensions.height / 2;
 
-    // Seed any existing nodes near center so they don't cluster at (0,0)
+    // Reposition all existing nodes near center — they were likely added before
+    // the ResizeObserver fired, so their positions are based on {0,0} dimensions
     for (const node of nodesRef.current) {
-      if ((node.x ?? 0) === 0 && (node.y ?? 0) === 0) {
-        node.x = cx + (Math.random() - 0.5) * 200;
-        node.y = cy + (Math.random() - 0.5) * 200;
-      }
+      node.x = cx + (Math.random() - 0.5) * 200;
+      node.y = cy + (Math.random() - 0.5) * 200;
     }
 
     const sim = d3
