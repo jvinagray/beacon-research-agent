@@ -26,21 +26,22 @@ describe("BrainBadge", () => {
     render(<BrainBadge snapshot={snapshot} onExpand={vi.fn()} />);
     const button = screen.getByRole("button");
     expect(button).toBeDefined();
-    // Lucide Brain renders an SVG
     const svg = button.querySelector("svg");
     expect(svg).toBeTruthy();
   });
 
-  it("displays node count", () => {
+  it("displays node and edge counts", () => {
     render(<BrainBadge snapshot={snapshot} onExpand={vi.fn()} />);
     expect(screen.getByText("5")).toBeDefined();
+    expect(screen.getByText("4")).toBeDefined();
   });
 
-  it("shows full stats on hover tooltip", () => {
+  it("shows tooltip with details on hover", () => {
     render(<BrainBadge snapshot={snapshot} onExpand={vi.fn()} />);
     const button = screen.getByRole("button");
     fireEvent.mouseEnter(button);
-    expect(screen.getByText("5 nodes / 4 edges")).toBeDefined();
+    expect(screen.getByText(/Research Brain/)).toBeDefined();
+    expect(screen.getByText(/2 sources/)).toBeDefined();
   });
 
   it("click calls onExpand callback", () => {
@@ -50,9 +51,9 @@ describe("BrainBadge", () => {
     expect(onExpand).toHaveBeenCalledOnce();
   });
 
-  it("applies glass morphism styling", () => {
+  it("applies glass styling", () => {
     render(<BrainBadge snapshot={snapshot} onExpand={vi.fn()} />);
     const button = screen.getByRole("button");
-    expect(button.className).toContain("backdrop-blur");
+    expect(button.className).toContain("glass");
   });
 });

@@ -9,22 +9,48 @@ interface BrainBadgeProps {
 
 export function BrainBadge({ snapshot, onExpand }: BrainBadgeProps) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const sourceCount = snapshot.nodes.filter((n) => n.type === "source").length;
+  const conceptCount = snapshot.nodes.filter((n) => n.type === "concept").length;
 
   return (
     <button
-      className="relative w-12 h-12 flex items-center justify-center rounded-xl backdrop-blur-md bg-white/10 border border-white/20 cursor-pointer hover:bg-white/20 transition-colors"
+      className="group relative flex items-center gap-3 px-4 py-2.5 rounded-xl glass
+                 border-primary/15 hover:border-primary/30 transition-all duration-300
+                 hover:shadow-[0_0_20px_hsl(var(--primary)/0.15)]"
       onClick={onExpand}
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
       aria-label="Expand brain graph"
     >
-      <Brain size={24} className="text-primary" />
-      <span className="absolute -bottom-1 -right-1 text-[10px] font-bold bg-primary text-primary-foreground rounded-full min-w-4 h-4 px-0.5 flex items-center justify-center">
-        {snapshot.nodeCount}
+      {/* Pulsing ring */}
+      <div className="relative">
+        <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: "3s" }} />
+        <Brain size={20} className="relative text-primary" />
+      </div>
+
+      {/* Stats */}
+      <div className="flex items-center gap-2 text-xs">
+        <span className="font-mono text-primary font-semibold">{snapshot.nodeCount}</span>
+        <span className="text-muted-foreground">nodes</span>
+        <span className="text-muted-foreground/30">|</span>
+        <span className="font-mono text-primary font-semibold">{snapshot.linkCount}</span>
+        <span className="text-muted-foreground">edges</span>
+      </div>
+
+      {/* Expand hint */}
+      <span className="text-[10px] text-muted-foreground/50 group-hover:text-primary/60 transition-colors uppercase tracking-wider">
+        View
       </span>
+
+      {/* Tooltip */}
       {showTooltip && (
-        <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap bg-popover text-popover-foreground text-xs rounded-md px-2 py-1 shadow-lg z-50">
-          {snapshot.nodeCount} nodes / {snapshot.linkCount} edges
+        <div className="absolute left-0 top-full mt-2 whitespace-nowrap glass text-xs rounded-lg px-3 py-2 shadow-lg z-50 border-primary/10">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-primary/80 font-medium">Research Brain</span>
+            <span className="text-muted-foreground">
+              {sourceCount} sources · {conceptCount} concepts · {snapshot.linkCount} connections
+            </span>
+          </div>
         </div>
       )}
     </button>

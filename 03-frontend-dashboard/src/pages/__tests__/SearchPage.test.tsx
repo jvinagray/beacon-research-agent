@@ -15,10 +15,6 @@ globalThis.ResizeObserver = vi.fn().mockImplementation(() => ({
 vi.mock('@/components/BrainGraph', () => ({
   BrainGraph: () => <div data-testid="brain-graph" />,
 }));
-vi.mock('@/components/BrainDashboard', () => ({
-  BrainDashboard: () => <div data-testid="brain-dashboard" />,
-}));
-vi.mock('@/components/BrainDashboard.css', () => ({}));
 vi.mock('@/hooks/useBrainSimulation', () => ({
   useBrainSimulation: () => ({
     addStageNodes: vi.fn(),
@@ -103,25 +99,26 @@ describe('SearchPage', () => {
     expect(screen.getByRole('button', { name: /research/i })).toBeInTheDocument();
   });
 
-  it('renders brain dashboard when status is loading', () => {
+  it('disables input and button when loading', () => {
     mockState = { ...initialState, status: 'loading' };
     renderSearchPage();
-    // When active, the full BrainDashboard replaces the search form
-    expect(screen.getByTestId('brain-dashboard')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /research/i })).not.toBeInTheDocument();
+    const button = screen.getByRole('button', { name: /research/i });
+    expect(button).toBeDisabled();
+    const input = screen.getByPlaceholderText(/what do you want to learn/i);
+    expect(input).toBeDisabled();
   });
 
-  it('renders brain dashboard when status is streaming', () => {
+  it('shows brain graph background during streaming', () => {
     mockState = {
       ...initialState,
       status: 'streaming',
       statusMessage: 'Evaluating sources...',
     };
     renderSearchPage();
-    expect(screen.getByTestId('brain-dashboard')).toBeInTheDocument();
+    expect(screen.getByTestId('brain-graph')).toBeInTheDocument();
   });
 
-  it('renders brain dashboard with sources during streaming', () => {
+  it('shows source cards during streaming via ProgressFeed', () => {
     mockState = {
       ...initialState,
       status: 'streaming',
@@ -146,7 +143,7 @@ describe('SearchPage', () => {
       sourceTotal: 5,
     };
     renderSearchPage();
-    expect(screen.getByTestId('brain-dashboard')).toBeInTheDocument();
+    expect(screen.getByText('React Docs')).toBeInTheDocument();
   });
 
   it('error banner appears on non-recoverable error', () => {
@@ -168,7 +165,6 @@ describe('SearchPage', () => {
     };
     renderSearchPage();
 
-    // Type a topic first
     const input = screen.getByPlaceholderText(/what do you want to learn/i);
     fireEvent.change(input, { target: { value: 'React' } });
 
@@ -191,7 +187,6 @@ describe('SearchPage', () => {
     };
     renderSearchPage();
 
-    // Fire snapshot to trigger navigation
     act(() => {
       capturedOnSnapshot?.({ nodes: [], links: [], nodeCount: 0, linkCount: 0 });
     });
