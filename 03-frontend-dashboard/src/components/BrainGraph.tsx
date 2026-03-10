@@ -41,15 +41,13 @@ export function BrainGraph({
   onNodeClick,
 }: BrainGraphProps) {
   const filterId = useId();
-  const idPrefix = filterId.replace(/:/g, "");
+  const p = filterId.replace(/:/g, ""); // prefix for IDs
   const [hoveredNode, setHoveredNode] = useState<HoveredNodeState | null>(null);
   const [pinnedNode, setPinnedNode] = useState<HoveredNodeState | null>(null);
   const pinnedNodeRef = useRef<HoveredNodeState | null>(null);
 
-  // Keep ref in sync with state (avoids pinnedNode in effect deps)
   useEffect(() => { pinnedNodeRef.current = pinnedNode; }, [pinnedNode]);
 
-  // Clear tooltip when graph is minimized
   useEffect(() => {
     if (minimized) {
       setHoveredNode(null);
@@ -57,33 +55,26 @@ export function BrainGraph({
     }
   }, [minimized]);
 
-  // Set up zoom/pan behavior
+  // Zoom/pan
   useEffect(() => {
     const svgEl = svgRef.current;
     if (!svgEl) return;
-
     const svg = d3.select(svgEl);
     const zoomGroup = svg.select<SVGGElement>(".zoom-group");
-
     const zoomBehavior = d3
       .zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.3, 3])
       .on("zoom", (event) => {
         zoomGroup.attr("transform", event.transform);
       });
-
     svg.call(zoomBehavior);
-
-    return () => {
-      svg.on(".zoom", null);
-    };
+    return () => { svg.on(".zoom", null); };
   }, [svgRef]);
 
-  // Set up hover event listeners on node elements
+  // Hover/click event listeners
   useEffect(() => {
     const svgEl = svgRef.current;
     if (!svgEl) return;
-
     const svg = d3.select(svgEl);
     const nodeGroup = svg.select<SVGGElement>(".nodes");
 
@@ -127,23 +118,17 @@ export function BrainGraph({
             if (parsed.protocol === "http:" || parsed.protocol === "https:") {
               window.open(d.url, "_blank", "noopener,noreferrer");
             }
-          } catch {
-            // invalid URL, silently ignore
-          }
+          } catch { /* invalid URL */ }
           onNodeClick?.("source", d.id);
           break;
         }
         case "stage":
-          if (onNodeClick) {
-            onNodeClick("stage", d.id);
-          } else {
-            setPinnedNode({ node: d, x: event.clientX, y: event.clientY });
-          }
+          if (onNodeClick) onNodeClick("stage", d.id);
+          else setPinnedNode({ node: d, x: event.clientX, y: event.clientY });
           break;
         case "concept":
-          if (onNodeClick) {
-            onNodeClick("concept", d.id);
-          } else {
+          if (onNodeClick) onNodeClick("concept", d.id);
+          else {
             let linkedTitles: string[] | undefined;
             if (links && nodes) {
               linkedTitles = links
@@ -190,7 +175,6 @@ export function BrainGraph({
 
   const containerClasses = [
     "brain-graph-container",
-    "glass-morphism",
     minimized ? "minimized" : "",
     className ?? "",
   ]
@@ -203,121 +187,86 @@ export function BrainGraph({
         if (e.target === e.currentTarget) setPinnedNode(null);
       }}>
         <defs>
-          {/* === GLOW FILTERS === */}
-          <filter id={`${idPrefix}-stage-glow-idle`} x="-80%" y="-80%" width="260%" height="260%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-          <filter id={`${idPrefix}-stage-glow-active`} x="-80%" y="-80%" width="260%" height="260%">
-            <feGaussianBlur stdDeviation="6" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-          <filter id={`${idPrefix}-stage-glow-complete`} x="-80%" y="-80%" width="260%" height="260%">
+          {/* Glow filters */}
+          <filter id={`${p}-orb`} x="-60%" y="-60%" width="220%" height="220%">
             <feGaussianBlur stdDeviation="4" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
-          <filter id={`${idPrefix}-link-glow`} x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="2" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-          <filter id={`${idPrefix}-orb-glow`} x="-60%" y="-60%" width="220%" height="220%">
+          <filter id={`${p}-concept`} x="-40%" y="-40%" width="180%" height="180%">
             <feGaussianBlur stdDeviation="3" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
-          <filter id={`${idPrefix}-text-glow`} x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="1" result="blur" />
+          <filter id={`${p}-link`} x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="1.5" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
-          <filter id={`${idPrefix}-concept-glow`} x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
+          <filter id={`${p}-text`} x="-10%" y="-10%" width="120%" height="120%">
+            <feGaussianBlur stdDeviation="0.8" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
 
-          {/* === RADIAL GRADIENTS FOR SOURCE ORBS === */}
-          <radialGradient id={`${idPrefix}-grad-academic`} cx="35%" cy="35%">
-            <stop offset="0%" stopColor="hsl(217, 95%, 78%)" />
+          {/* Source orb radial gradients */}
+          <radialGradient id={`${p}-academic`} cx="35%" cy="35%">
+            <stop offset="0%" stopColor="hsl(217, 95%, 80%)" />
             <stop offset="50%" stopColor="hsl(217, 91%, 60%)" />
-            <stop offset="100%" stopColor="hsl(217, 85%, 35%)" />
+            <stop offset="100%" stopColor="hsl(217, 80%, 30%)" />
           </radialGradient>
-          <radialGradient id={`${idPrefix}-grad-news`} cx="35%" cy="35%">
-            <stop offset="0%" stopColor="hsl(38, 95%, 72%)" />
+          <radialGradient id={`${p}-news`} cx="35%" cy="35%">
+            <stop offset="0%" stopColor="hsl(38, 95%, 75%)" />
             <stop offset="50%" stopColor="hsl(38, 92%, 50%)" />
-            <stop offset="100%" stopColor="hsl(30, 85%, 30%)" />
+            <stop offset="100%" stopColor="hsl(30, 80%, 28%)" />
           </radialGradient>
-          <radialGradient id={`${idPrefix}-grad-docs`} cx="35%" cy="35%">
-            <stop offset="0%" stopColor="hsl(155, 80%, 65%)" />
+          <radialGradient id={`${p}-docs`} cx="35%" cy="35%">
+            <stop offset="0%" stopColor="hsl(155, 80%, 68%)" />
             <stop offset="50%" stopColor="hsl(155, 71%, 45%)" />
-            <stop offset="100%" stopColor="hsl(155, 65%, 25%)" />
+            <stop offset="100%" stopColor="hsl(155, 60%, 22%)" />
           </radialGradient>
-          <radialGradient id={`${idPrefix}-grad-media`} cx="35%" cy="35%">
-            <stop offset="0%" stopColor="hsl(270, 90%, 75%)" />
+          <radialGradient id={`${p}-media`} cx="35%" cy="35%">
+            <stop offset="0%" stopColor="hsl(270, 90%, 78%)" />
             <stop offset="50%" stopColor="hsl(262, 83%, 58%)" />
-            <stop offset="100%" stopColor="hsl(262, 75%, 32%)" />
+            <stop offset="100%" stopColor="hsl(262, 70%, 28%)" />
           </radialGradient>
-          <radialGradient id={`${idPrefix}-grad-other`} cx="35%" cy="35%">
-            <stop offset="0%" stopColor="hsl(220, 15%, 60%)" />
+          <radialGradient id={`${p}-other`} cx="35%" cy="35%">
+            <stop offset="0%" stopColor="hsl(220, 15%, 62%)" />
             <stop offset="50%" stopColor="hsl(220, 9%, 46%)" />
-            <stop offset="100%" stopColor="hsl(220, 10%, 25%)" />
+            <stop offset="100%" stopColor="hsl(220, 8%, 22%)" />
           </radialGradient>
 
-          {/* === STAGE NODE GRADIENTS === */}
-          <radialGradient id={`${idPrefix}-stage-idle`} cx="35%" cy="35%">
-            <stop offset="0%" stopColor="hsl(210, 70%, 60%)" />
-            <stop offset="100%" stopColor="hsl(210, 60%, 30%)" />
-          </radialGradient>
-          <radialGradient id={`${idPrefix}-stage-active`} cx="35%" cy="35%">
-            <stop offset="0%" stopColor="hsl(200, 100%, 75%)" />
-            <stop offset="60%" stopColor="hsl(210, 90%, 55%)" />
-            <stop offset="100%" stopColor="hsl(220, 80%, 35%)" />
-          </radialGradient>
-          <radialGradient id={`${idPrefix}-stage-complete`} cx="35%" cy="35%">
-            <stop offset="0%" stopColor="hsl(155, 85%, 65%)" />
-            <stop offset="60%" stopColor="hsl(155, 71%, 45%)" />
-            <stop offset="100%" stopColor="hsl(155, 60%, 25%)" />
-          </radialGradient>
-
-          {/* === CONCEPT GRADIENT === */}
-          <linearGradient id={`${idPrefix}-concept-fill`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="hsl(270, 50%, 25%)" />
-            <stop offset="100%" stopColor="hsl(250, 45%, 18%)" />
-          </linearGradient>
-
-          {/* === GRID PATTERN === */}
-          <pattern id={`${idPrefix}-grid`} width="20" height="20" patternUnits="userSpaceOnUse">
-            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(100,180,255,0.15)" strokeWidth="0.5" />
+          {/* Grid pattern */}
+          <pattern id={`${p}-grid`} width="30" height="30" patternUnits="userSpaceOnUse">
+            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(80,140,255,0.12)" strokeWidth="0.3" />
           </pattern>
 
-          {/* === SCANNING LINE GRADIENT === */}
-          <linearGradient id={`${idPrefix}-scan`} x1="0%" y1="0%" x2="0%" y2="100%">
+          {/* Scan gradient */}
+          <linearGradient id={`${p}-scan`} x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="rgba(80,160,255,0)" />
-            <stop offset="45%" stopColor="rgba(80,160,255,0.06)" />
-            <stop offset="50%" stopColor="rgba(80,160,255,0.12)" />
-            <stop offset="55%" stopColor="rgba(80,160,255,0.06)" />
+            <stop offset="45%" stopColor="rgba(80,160,255,0.04)" />
+            <stop offset="50%" stopColor="rgba(80,160,255,0.08)" />
+            <stop offset="55%" stopColor="rgba(80,160,255,0.04)" />
             <stop offset="100%" stopColor="rgba(80,160,255,0)" />
           </linearGradient>
         </defs>
 
-        {/* Background grid */}
-        <rect className="grid-bg" width="200%" height="200%" x="-50%" y="-50%"
-          fill={`url(#${idPrefix}-grid)`} />
-
-        {/* Scanning line */}
-        <rect className="scan-line" width="100%" height="40%" x="0" y="0"
-          fill={`url(#${idPrefix}-scan)`} />
+        {/* Ambient background */}
+        <rect className="grid-bg" width="300%" height="300%" x="-100%" y="-100%"
+          fill={`url(#${p}-grid)`} />
+        <rect className="scan-line" width="100%" height="30%" x="0" y="0"
+          fill={`url(#${p}-scan)`} />
 
         <g className="zoom-group">
           <g className="links"></g>
           <g className="nodes"></g>
-          <g className="labels"></g>
         </g>
       </svg>
-      <button
-        className="brain-graph-control"
-        onClick={minimized ? onRestore : onMinimize}
-        aria-label={minimized ? "Restore graph" : "Minimize graph"}
-      >
-        {minimized ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
-      </button>
+      {minimized && (
+        <button
+          className="brain-graph-control"
+          onClick={onRestore}
+          aria-label="Restore graph"
+        >
+          <Maximize2 size={16} />
+        </button>
+      )}
       {!minimized && (
         <BrainGraphTooltip
           hoveredNode={(pinnedNode ?? hoveredNode)?.node ?? null}

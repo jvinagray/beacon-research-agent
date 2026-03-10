@@ -7,6 +7,7 @@ const mockLinkForce = {
   links: vi.fn().mockReturnThis(),
   id: vi.fn().mockReturnThis(),
   distance: vi.fn().mockReturnThis(),
+  strength: vi.fn().mockReturnThis(),
 };
 
 const mockSimulation = {
@@ -23,6 +24,7 @@ const mockSimulation = {
   restart: vi.fn().mockReturnThis(),
   stop: vi.fn(),
   on: vi.fn().mockReturnThis(),
+  velocityDecay: vi.fn().mockReturnThis(),
   strength: vi.fn().mockReturnThis(),
   id: vi.fn().mockReturnThis(),
   links: vi.fn().mockReturnThis(),
@@ -36,8 +38,10 @@ function mockSelection(): any {
     data: vi.fn(() => mockSelection()),
     join: vi.fn(() => mockSelection()),
     enter: vi.fn(() => mockSelection()),
+    exit: vi.fn(() => mockSelection()),
     append: vi.fn(() => mockSelection()),
     attr: vi.fn(() => sel),
+    style: vi.fn(() => sel),
     text: vi.fn(() => sel),
     transition: vi.fn(() => sel),
     duration: vi.fn(() => sel),
@@ -52,6 +56,7 @@ vi.mock("d3", () => ({
   forceManyBody: vi.fn(() => ({ strength: vi.fn().mockReturnValue({}) })),
   forceCollide: vi.fn(() => ({})),
   forceCenter: vi.fn(() => ({})),
+  forceX: vi.fn(() => ({ strength: vi.fn().mockReturnValue({}) })),
   forceY: vi.fn(() => ({ strength: vi.fn().mockReturnValue({}) })),
   select: vi.fn(() => mockSelection()),
 }));
@@ -113,7 +118,7 @@ describe("useBrainSimulation", () => {
     expect(ids).toContain("stage-synthesize");
   });
 
-  it("addStageNodes creates 3 spine links (SEARCH->EVALUATE->EXTRACT->SYNTHESIZE)", async () => {
+  it("addStageNodes creates stage nodes without spine links (stages are invisible)", async () => {
     const useBrainSimulation = await getHook();
     const svgRef = createSvgRef();
     const { result } = renderHook(() => useBrainSimulation(svgRef, dimensions));
@@ -123,8 +128,8 @@ describe("useBrainSimulation", () => {
     });
 
     const snapshot = result.current.getSnapshot();
-    const spineLinks = snapshot.links.filter((l) => l.type === "spine");
-    expect(spineLinks).toHaveLength(3);
+    // Stage nodes exist for state tracking but no spine links (pipeline bar removed)
+    expect(snapshot.links.filter((l) => l.type === "spine")).toHaveLength(0);
   });
 
   it("addSourceNode increases node count by 1", async () => {
@@ -146,7 +151,7 @@ describe("useBrainSimulation", () => {
     expect(after).toBe(before + 1);
   });
 
-  it("addSourceNode creates a source-to-stage link to EVALUATE node", async () => {
+  it("addSourceNode does not create source-to-stage links (sources float freely)", async () => {
     const useBrainSimulation = await getHook();
     const svgRef = createSvgRef();
     const { result } = renderHook(() => useBrainSimulation(svgRef, dimensions));
@@ -160,9 +165,7 @@ describe("useBrainSimulation", () => {
     const sourceLinks = snapshot.links.filter(
       (l) => l.type === "source-to-stage"
     );
-    expect(sourceLinks).toHaveLength(1);
-    expect(sourceLinks[0].target).toBe("stage-evaluate");
-    expect(sourceLinks[0].source).toBe("https://test.com/1");
+    expect(sourceLinks).toHaveLength(0);
   });
 
   it("addSourceNode respects 25-node cap (26th source not added if score lower than min)", async () => {
@@ -378,9 +381,9 @@ describe("useBrainSimulation", () => {
 
     const snapshot = result.current.getSnapshot();
     expect(snapshot.nodeCount).toBe(5); // 4 stages + 1 source
-    expect(snapshot.linkCount).toBe(4); // 3 spine + 1 source-to-stage
+    expect(snapshot.linkCount).toBe(0); // no spine or source-to-stage links
     expect(snapshot.nodes).toHaveLength(5);
-    expect(snapshot.links).toHaveLength(4);
+    expect(snapshot.links).toHaveLength(0);
   });
 
   it("getSnapshot preserves node positions (x, y values present)", async () => {

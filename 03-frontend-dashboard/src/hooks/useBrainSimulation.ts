@@ -17,7 +17,6 @@ import {
 
 const MAX_SOURCES = 25;
 
-/** Extract string ID from a link endpoint that may be a D3-resolved object ref */
 function linkId(endpoint: string | GraphNode | any): string {
   return typeof endpoint === "object" && endpoint !== null
     ? endpoint.id
@@ -35,42 +34,42 @@ const STAGE_DEFS: Array<{
   { id: "stage-synthesize", label: "SYNTHESIZE", fxRatio: 0.85 },
 ];
 
-/** Resolve the SVG filter/gradient ID prefix from the defs in the SVG */
+/** Get the SVG defs ID prefix from the rendered component */
 function getIdPrefix(svgEl: SVGSVGElement): string {
-  // The BrainGraph component uses useId() and strips colons
-  // Find any gradient/filter that starts with a known suffix
-  const defs = svgEl.querySelector("defs");
-  if (!defs) return "";
-  const firstGrad = defs.querySelector("[id$='-grad-academic']");
-  if (firstGrad) {
-    return firstGrad.id.replace("-grad-academic", "");
-  }
-  const firstFilter = defs.querySelector("[id$='-stage-glow-idle']");
-  if (firstFilter) {
-    return firstFilter.id.replace("-stage-glow-idle", "");
-  }
-  return "";
+  const el = svgEl.querySelector("defs [id$='-academic']");
+  return el ? el.id.replace("-academic", "") : "";
 }
 
-/** Map content category to gradient ID */
-function getGradientUrl(prefix: string, category: string): string {
-  const map: Record<string, string> = {
-    academic: "grad-academic",
-    news: "grad-news",
-    docs: "grad-docs",
-    media: "grad-media",
-    other: "grad-other",
+/** Map content category to gradient URL */
+function gradUrl(prefix: string, cat: string): string {
+  const m: Record<string, string> = {
+    academic: "academic", news: "news", docs: "docs", media: "media", other: "other",
   };
-  return `url(#${prefix}-${map[category] ?? "grad-other"})`;
+  return `url(#${prefix}-${m[cat] ?? "other"})`;
+}
+
+/** Truncate text to a max length */
+function truncate(s: string, max: number): string {
+  return s.length > max ? s.slice(0, max - 1) + "\u2026" : s;
+}
+
+/** Z-depth → visual scale (0.6 to 1.15) */
+function depthScale(d: any): number {
+  const z = (d._z ?? 0) as number;
+  return 0.6 + (z + 1) * 0.275;
+}
+
+/** Z-depth → opacity (0.35 to 1.0) */
+function depthOpacity(d: any): number {
+  const z = (d._z ?? 0) as number;
+  return 0.35 + (z + 1) * 0.325;
 }
 
 export function useBrainSimulation(
   svgRef: RefObject<SVGSVGElement | null>,
   dimensions: { width: number; height: number }
 ) {
-  const simulationRef = useRef<d3.Simulation<GraphNode, GraphLink> | null>(
-    null
-  );
+  const simulationRef = useRef<d3.Simulation<GraphNode, GraphLink> | null>(null);
   const nodesRef = useRef<GraphNode[]>([]);
   const linksRef = useRef<GraphLink[]>([]);
   const moreCountRef = useRef(0);
@@ -84,72 +83,52 @@ export function useBrainSimulation(
         d3
           .forceLink<GraphNode, GraphLink>(linksRef.current)
           .id((d) => d.id)
-          .distance((d) => {
-            if (d.type === "spine") return 120;
-            if (d.type === "source-to-stage") return 100;
-            if (d.type === "concept-to-source") return 70;
-            return 60;
-          })
+          .distance(120)
+          .strength(0.3)
       )
-      .force("charge", d3.forceManyBody().strength(-400))
+      .force("charge", d3.forceManyBody().strength((d) =>
+        (d as GraphNode).type === "stage" ? 0 : -500
+      ))
       .force(
         "collide",
-        d3.forceCollide<GraphNode>((d) =>
-          (d as SourceNodeData).radius
-            ? (d as SourceNodeData).radius + 8
-            : 30
-        )
+        d3.forceCollide<GraphNode>((d) => {
+          if ((d as GraphNode).type === "stage") return 0;
+          if ((d as GraphNode).type === "concept") return 50;
+          return ((d as SourceNodeData).radius ?? 10) + 30;
+        })
       )
-      .force(
-        "center",
-        d3.forceCenter(dimensions.width / 2, dimensions.height / 2)
-      )
-      .force("y", d3.forceY(dimensions.height * 0.55).strength(0.03))
+      .force("x", d3.forceX(dimensions.width / 2).strength(0.025))
+      .force("y", d3.forceY(dimensions.height / 2).strength(0.025))
+      .velocityDecay(0.4)
       .on("tick", () => {
         if (!svgRef.current) return;
         const svg = d3.select(svgRef.current);
 
-        svg
-          .selectAll<SVGCircleElement, GraphNode>(".node-source, .node-stage")
-          .attr("cx", (d) => d.x ?? 0)
-          .attr("cy", (d) => d.y ?? 0);
+        // Source groups
+        svg.selectAll<SVGGElement, SourceNodeData>("g.source-group")
+          .attr("transform", (d) =>
+            `translate(${d.x ?? 0},${d.y ?? 0}) scale(${depthScale(d)})`
+          )
+          .attr("opacity", depthOpacity);
 
-        // Pulse rings follow stage nodes
-        svg
-          .selectAll<SVGCircleElement, GraphNode>(".pulse-ring")
-          .attr("cx", (d) => d.x ?? 0)
-          .attr("cy", (d) => d.y ?? 0);
+        // Concept groups
+        svg.selectAll<SVGGElement, ConceptNodeData>("g.concept-group")
+          .attr("transform", (d) =>
+            `translate(${d.x ?? 0},${d.y ?? 0}) scale(${depthScale(d)})`
+          )
+          .attr("opacity", depthOpacity);
 
-        svg
-          .selectAll<SVGRectElement, GraphNode>(".node-concept")
-          .attr("x", (d) => (d.x ?? 0) - 32)
-          .attr("y", (d) => (d.y ?? 0) - 11);
-
-        svg
-          .selectAll<SVGLineElement, GraphLink>(".link")
+        // Links
+        svg.selectAll<SVGLineElement, GraphLink>(".link")
           .attr("x1", (d) => ((d.source as unknown as GraphNode).x ?? 0))
           .attr("y1", (d) => ((d.source as unknown as GraphNode).y ?? 0))
           .attr("x2", (d) => ((d.target as unknown as GraphNode).x ?? 0))
           .attr("y2", (d) => ((d.target as unknown as GraphNode).y ?? 0));
-
-        // Stage labels
-        svg
-          .selectAll<SVGTextElement, GraphNode>(".node-label")
-          .attr("x", (d) => d.x ?? 0)
-          .attr("y", (d) => (d.y ?? 0) + 4);
-
-        // Concept labels
-        svg
-          .selectAll<SVGTextElement, GraphNode>(".concept-text-label")
-          .attr("x", (d) => d.x ?? 0)
-          .attr("y", (d) => (d.y ?? 0) + 1);
       });
 
     simulationRef.current = sim;
 
-    return () => {
-      sim.stop();
-    };
+    return () => { sim.stop(); };
   }, [dimensions.width, dimensions.height, svgRef]);
 
   const updateSimulation = useCallback(() => {
@@ -160,7 +139,7 @@ export function useBrainSimulation(
     if (linkForce) linkForce.links(linksRef.current);
   }, []);
 
-  /** D3 enter/update/exit — creates and updates SVG elements from data arrays */
+  /** D3 enter/update/exit — render labeled nodes and connections */
   const renderElements = useCallback(() => {
     const svgEl = svgRef.current;
     if (!svgEl) return;
@@ -169,216 +148,128 @@ export function useBrainSimulation(
     const svg = d3.select(svgEl);
     const linkGroup = svg.select<SVGGElement>(".zoom-group .links");
     const nodeGroup = svg.select<SVGGElement>(".zoom-group .nodes");
-    const labelGroup = svg.select<SVGGElement>(".zoom-group .labels");
+
+    const sourceNodes = nodesRef.current.filter((n) => n.type === "source") as SourceNodeData[];
+    const conceptNodes = nodesRef.current.filter((n) => n.type === "concept") as ConceptNodeData[];
+
+    // Only render concept-to-source links (the meaningful connections)
+    const visibleLinks = linksRef.current.filter((l) => l.type === "concept-to-source");
 
     // --- Links ---
     linkGroup
       .selectAll<SVGLineElement, GraphLink>("line")
-      .data(linksRef.current, (d) => `${linkId(d.source)}-${linkId(d.target)}`)
+      .data(visibleLinks, (d) => `${linkId(d.source)}-${linkId(d.target)}`)
       .join(
         (enter) =>
           enter
             .append("line")
-            .attr("class", (d) => {
-              const classes = ["link"];
-              if (d.type === "spine") classes.push("link-spine");
-              else if (d.type === "source-to-stage") classes.push("link-source-to-stage");
-              else if (d.type === "concept-to-source") classes.push("link-concept-to-source");
-              return classes.join(" ");
-            })
-            .attr("filter", (d) => d.type === "spine" ? `url(#${prefix}-link-glow)` : null)
+            .attr("class", "link link-concept")
+            .attr("filter", `url(#${prefix}-link)`)
             .attr("stroke-opacity", 0)
             .transition()
-            .duration(400)
+            .duration(600)
             .attr("stroke-opacity", 1),
         (update) => update,
-        (exit) => exit.transition().duration(200).attr("stroke-opacity", 0).remove(),
+        (exit) => exit.transition().duration(300).attr("stroke-opacity", 0).remove(),
       );
 
-    // --- Nodes ---
-    const stageNodes = nodesRef.current.filter((n) => n.type === "stage") as StageNodeData[];
-    const sourceNodes = nodesRef.current.filter((n) => n.type === "source") as SourceNodeData[];
-    const conceptNodes = nodesRef.current.filter((n) => n.type === "concept") as ConceptNodeData[];
+    // --- Source node groups (circle + title) ---
+    const sourceJoin = nodeGroup
+      .selectAll<SVGGElement, SourceNodeData>("g.source-group")
+      .data(sourceNodes, (d) => d.id);
 
-    // Stage nodes (circles with gradient fills and glow)
-    nodeGroup
-      .selectAll<SVGCircleElement, StageNodeData>("circle.node-stage")
-      .data(stageNodes, (d) => d.id)
-      .join(
-        (enter) =>
-          enter
-            .append("circle")
-            .attr("class", "node node-stage node-stage-idle")
-            .attr("r", 18)
-            .attr("fill", `url(#${prefix}-stage-idle)`)
-            .attr("stroke", "rgba(100, 180, 255, 0.4)")
-            .attr("stroke-width", 1.5)
-            .attr("filter", `url(#${prefix}-stage-glow-idle)`)
-            .attr("cx", (d) => d.fx ?? d.x ?? 0)
-            .attr("cy", (d) => d.fy ?? d.y ?? 0),
-        (update) =>
-          update
-            .attr("fill", (d) => {
-              if (d.state === "active") return `url(#${prefix}-stage-active)`;
-              if (d.state === "complete") return `url(#${prefix}-stage-complete)`;
-              return `url(#${prefix}-stage-idle)`;
-            })
-            .attr("stroke", (d) => {
-              if (d.state === "active") return "rgba(100, 200, 255, 0.7)";
-              if (d.state === "complete") return "rgba(100, 255, 180, 0.5)";
-              return "rgba(100, 180, 255, 0.4)";
-            })
-            .attr("filter", (d) => {
-              if (d.state === "active") return `url(#${prefix}-stage-glow-active)`;
-              if (d.state === "complete") return `url(#${prefix}-stage-glow-complete)`;
-              return `url(#${prefix}-stage-glow-idle)`;
-            })
-            .attr("class", (d) => {
-              const cls = ["node", "node-stage"];
-              if (d.state === "idle") cls.push("node-stage-idle");
-              else if (d.state === "active") cls.push("node-stage-active");
-              else if (d.state === "complete") cls.push("node-stage-complete");
-              return cls.join(" ");
-            }),
-        (exit) => exit.remove(),
-      );
+    const sourceEnter = sourceJoin.enter()
+      .append("g")
+      .attr("class", "source-group node spawning")
+      .attr("transform", (d) =>
+        `translate(${d.x ?? 0},${d.y ?? 0}) scale(${depthScale(d)})`
+      )
+      .attr("opacity", depthOpacity);
 
-    // Pulse rings for active stages
-    nodeGroup
-      .selectAll<SVGCircleElement, StageNodeData>("circle.pulse-ring")
-      .data(stageNodes.filter((s) => s.state === "active"), (d) => `ring-${d.id}`)
-      .join(
-        (enter) =>
-          enter
-            .append("circle")
-            .attr("class", "pulse-ring")
-            .attr("r", 24)
-            .attr("fill", "none")
-            .attr("stroke", "rgba(100, 200, 255, 0.5)")
-            .attr("stroke-width", 1.5)
-            .attr("cx", (d) => d.fx ?? d.x ?? 0)
-            .attr("cy", (d) => d.fy ?? d.y ?? 0),
-        (update) => update,
-        (exit) => exit.remove(),
-      );
+    // Orb
+    sourceEnter
+      .append("circle")
+      .attr("class", "source-circle")
+      .attr("r", (d) => d.radius)
+      .attr("fill", (d) => gradUrl(prefix, d.contentCategory))
+      .attr("fill-opacity", (d) => d.opacity ?? 1)
+      .attr("stroke", (d) => {
+        const c: Record<string, string> = {
+          academic: "rgba(100,160,255,0.35)",
+          news: "rgba(255,180,80,0.35)",
+          docs: "rgba(80,220,150,0.35)",
+          media: "rgba(180,120,255,0.35)",
+          other: "rgba(150,160,170,0.25)",
+        };
+        return c[d.contentCategory] ?? c.other;
+      })
+      .attr("stroke-width", 0.8)
+      .attr("filter", `url(#${prefix}-orb)`);
 
-    // Source nodes (circles with radial gradients and glow)
-    nodeGroup
-      .selectAll<SVGCircleElement, SourceNodeData>("circle.node-source")
-      .data(sourceNodes, (d) => d.id)
-      .join(
-        (enter) =>
-          enter
-            .append("circle")
-            .attr("class", "node node-source spawned")
-            .attr("r", (d) => d.radius)
-            .attr("fill", (d) => getGradientUrl(prefix, d.contentCategory))
-            .attr("fill-opacity", (d) => d.opacity ?? 1)
-            .attr("stroke", (d) => {
-              const colors: Record<string, string> = {
-                academic: "rgba(100, 160, 255, 0.4)",
-                news: "rgba(255, 180, 80, 0.4)",
-                docs: "rgba(80, 220, 150, 0.4)",
-                media: "rgba(180, 120, 255, 0.4)",
-                other: "rgba(150, 160, 170, 0.3)",
-              };
-              return colors[d.contentCategory] ?? colors.other;
-            })
-            .attr("stroke-width", 1)
-            .attr("filter", `url(#${prefix}-orb-glow)`)
-            .attr("cx", (d) => d.x ?? 0)
-            .attr("cy", (d) => d.y ?? 0),
-        (update) => update,
-        (exit) => exit.transition().duration(200).attr("r", 0).attr("opacity", 0).remove(),
-      );
+    // Title text below the orb
+    sourceEnter
+      .append("text")
+      .attr("class", "source-title")
+      .attr("y", (d) => d.radius + 14)
+      .attr("filter", `url(#${prefix}-text)`)
+      .text((d) => truncate(d.title, 36));
 
-    // Concept nodes (rounded rects with gradient and glow)
-    nodeGroup
-      .selectAll<SVGRectElement, ConceptNodeData>("rect.node-concept")
-      .data(conceptNodes, (d) => d.id)
-      .join(
-        (enter) =>
-          enter
-            .append("rect")
-            .attr("class", "node node-concept bloomed")
-            .attr("width", 64)
-            .attr("height", 22)
-            .attr("rx", 11)
-            .attr("fill", `url(#${prefix}-concept-fill)`)
-            .attr("stroke", "rgba(180, 130, 255, 0.45)")
-            .attr("stroke-width", 1)
-            .attr("filter", `url(#${prefix}-concept-glow)`)
-            .attr("x", (d) => (d.x ?? 0) - 32)
-            .attr("y", (d) => (d.y ?? 0) - 11),
-        (update) => update,
-        (exit) => exit.remove(),
-      );
+    sourceJoin.exit().transition().duration(300)
+      .attr("opacity", 0)
+      .attr("transform", (d: any) =>
+        `translate(${d.x ?? 0},${d.y ?? 0}) scale(0)`
+      )
+      .remove();
 
-    // --- Labels ---
-    // Stage labels
-    labelGroup
-      .selectAll<SVGTextElement, StageNodeData>("text.stage-label")
-      .data(stageNodes, (d) => d.id)
-      .join(
-        (enter) =>
-          enter
-            .append("text")
-            .attr("class", "node-label stage-label")
-            .attr("filter", `url(#${prefix}-text-glow)`)
-            .attr("x", (d) => d.fx ?? d.x ?? 0)
-            .attr("y", (d) => (d.fy ?? d.y ?? 0) + 4)
-            .text((d) => d.label),
-        (update) => update,
-        (exit) => exit.remove(),
-      );
+    // --- Concept node groups (glowing text + subtle ring) ---
+    const conceptJoin = nodeGroup
+      .selectAll<SVGGElement, ConceptNodeData>("g.concept-group")
+      .data(conceptNodes, (d) => d.id);
 
-    // Concept labels
-    labelGroup
-      .selectAll<SVGTextElement, ConceptNodeData>("text.concept-text-label")
-      .data(conceptNodes, (d) => d.id)
-      .join(
-        (enter) =>
-          enter
-            .append("text")
-            .attr("class", "concept-label concept-text-label")
-            .attr("x", (d) => d.x ?? 0)
-            .attr("y", (d) => (d.y ?? 0) + 1)
-            .text((d) => {
-              const name = d.name;
-              return name.length > 9 ? name.slice(0, 8) + "\u2026" : name;
-            }),
-        (update) => update,
-        (exit) => exit.remove(),
-      );
+    const conceptEnter = conceptJoin.enter()
+      .append("g")
+      .attr("class", "concept-group node blooming")
+      .attr("transform", (d) =>
+        `translate(${d.x ?? 0},${d.y ?? 0}) scale(${depthScale(d)})`
+      )
+      .attr("opacity", depthOpacity);
+
+    // Subtle halo ring
+    conceptEnter
+      .append("circle")
+      .attr("r", 20)
+      .attr("fill", "rgba(140, 100, 255, 0.06)")
+      .attr("stroke", "rgba(160, 120, 255, 0.2)")
+      .attr("stroke-width", 0.8);
+
+    // Concept name
+    conceptEnter
+      .append("text")
+      .attr("class", "concept-name")
+      .attr("filter", `url(#${prefix}-concept)`)
+      .text((d) => truncate(d.name, 18));
+
+    conceptJoin.exit().remove();
   }, [svgRef]);
 
+  // ================================================
+  // Public API (unchanged contract for event bridge)
+  // ================================================
+
   const addStageNodes = useCallback(() => {
-    const fyVal = dimensions.height * 0.3;
+    // Stage nodes exist for state tracking but are not rendered
     const stages: StageNodeData[] = STAGE_DEFS.map((def) => ({
       id: def.id,
       type: "stage" as const,
       label: def.label,
       state: "idle" as const,
-      fx: dimensions.width * def.fxRatio,
-      fy: fyVal,
+      // No fx/fy — let them drift harmlessly (they're invisible and have 0 charge)
     }));
-
     nodesRef.current.push(...stages);
-
-    const spineLinks: GraphLink[] = [];
-    for (let i = 0; i < STAGE_DEFS.length - 1; i++) {
-      spineLinks.push({
-        source: STAGE_DEFS[i].id,
-        target: STAGE_DEFS[i + 1].id,
-        type: "spine",
-      });
-    }
-    linksRef.current.push(...spineLinks);
-
+    // No spine links — the pipeline bar is gone
     updateSimulation();
-    renderElements();
-    simulationRef.current?.alpha(0.3).restart();
-  }, [dimensions.width, dimensions.height, updateSimulation, renderElements]);
+    simulationRef.current?.alpha(0.1).restart();
+  }, [updateSimulation]);
 
   const addSourceNode = useCallback(
     (source: EvaluatedSource) => {
@@ -393,8 +284,9 @@ export function useBrainSimulation(
         radius: computeSourceRadius(score),
         opacity: computeSourceOpacity(score),
       };
+      // Assign random z-depth for 3D effect
+      (newNode as any)._z = Math.random() * 2 - 1;
 
-      // Guard against duplicate source URLs
       if (nodesRef.current.some((n) => n.id === source.url)) return;
 
       const sourceNodes = nodesRef.current.filter(
@@ -406,13 +298,9 @@ export function useBrainSimulation(
           n.score < min.score ? n : min
         );
         if (score > lowest.score) {
-          nodesRef.current = nodesRef.current.filter(
-            (n) => n.id !== lowest.id
-          );
+          nodesRef.current = nodesRef.current.filter((n) => n.id !== lowest.id);
           linksRef.current = linksRef.current.filter(
-            (l) =>
-              linkId(l.source) !== lowest.id &&
-              linkId(l.target) !== lowest.id
+            (l) => linkId(l.source) !== lowest.id && linkId(l.target) !== lowest.id
           );
         } else {
           moreCountRef.current++;
@@ -421,11 +309,7 @@ export function useBrainSimulation(
       }
 
       nodesRef.current.push(newNode);
-      linksRef.current.push({
-        source: source.url,
-        target: "stage-evaluate",
-        type: "source-to-stage",
-      });
+      // No source-to-stage link — sources float freely in space
 
       updateSimulation();
       renderElements();
@@ -436,6 +320,10 @@ export function useBrainSimulation(
 
   const addConceptNodes = useCallback(
     (concepts: ConceptNodeData[], sourceLinks: GraphLink[]) => {
+      // Assign z-depth to concepts
+      for (const c of concepts) {
+        (c as any)._z = Math.random() * 2 - 1;
+      }
       nodesRef.current.push(...concepts);
       linksRef.current.push(...sourceLinks);
       updateSimulation();
@@ -449,21 +337,15 @@ export function useBrainSimulation(
     const node = nodesRef.current.find(
       (n) => n.id === `stage-${stage}`
     ) as StageNodeData | undefined;
-    if (node) {
-      node.state = "active";
-      renderElements();
-    }
-  }, [renderElements]);
+    if (node) node.state = "active";
+  }, []);
 
   const completeStage = useCallback((stage: string) => {
     const node = nodesRef.current.find(
       (n) => n.id === `stage-${stage}`
     ) as StageNodeData | undefined;
-    if (node) {
-      node.state = "complete";
-      renderElements();
-    }
-  }, [renderElements]);
+    if (node) node.state = "complete";
+  }, []);
 
   const settle = useCallback(() => {
     simulationRef.current?.alphaTarget(0);
@@ -486,13 +368,9 @@ export function useBrainSimulation(
               ? (n as ConceptNodeData).radius
               : 20,
         contentCategory:
-          n.type === "source"
-            ? (n as SourceNodeData).contentCategory
-            : undefined,
-        score:
-          n.type === "source" ? (n as SourceNodeData).score : undefined,
-        state:
-          n.type === "stage" ? (n as StageNodeData).state : undefined,
+          n.type === "source" ? (n as SourceNodeData).contentCategory : undefined,
+        score: n.type === "source" ? (n as SourceNodeData).score : undefined,
+        state: n.type === "stage" ? (n as StageNodeData).state : undefined,
       })),
       links: linksRef.current.map((l) => ({
         source: linkId(l.source),
@@ -510,6 +388,7 @@ export function useBrainSimulation(
         ...n,
         fx: n.x,
         fy: n.y,
+        _z: Math.random() * 2 - 1,
       })) as unknown as GraphNode[];
       linksRef.current = [...snapshot.links];
       updateSimulation();
@@ -528,7 +407,6 @@ export function useBrainSimulation(
       const svg = d3.select(svgEl);
       svg.select(".zoom-group .links").selectAll("*").remove();
       svg.select(".zoom-group .nodes").selectAll("*").remove();
-      svg.select(".zoom-group .labels").selectAll("*").remove();
     }
   }, [svgRef]);
 

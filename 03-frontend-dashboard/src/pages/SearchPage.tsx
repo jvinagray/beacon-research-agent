@@ -19,7 +19,6 @@ const SearchPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [infoBanner, setInfoBanner] = useState<string | null>(null);
-  const [minimized, setMinimized] = useState(false);
   const [snapshot, setSnapshot] = useState<SerializedGraphSnapshot | null>(null);
   const navigatedRef = useRef(false);
 
@@ -129,11 +128,22 @@ const SearchPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 gap-8">
-      {/* Background gradient orbs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/3 rounded-full blur-3xl" />
-      </div>
+      {/* Background: brain graph fills viewport during research, gradient orbs otherwise */}
+      {isActive ? (
+        <div ref={containerRef} className="fixed inset-0 z-0">
+          <BrainGraph
+            svgRef={svgRef}
+            minimized={false}
+            onMinimize={() => {}}
+            onRestore={() => {}}
+          />
+        </div>
+      ) : (
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/3 rounded-full blur-3xl" />
+        </div>
+      )}
 
       <div className="relative z-10 flex flex-col items-center gap-8 w-full">
         {/* Info Banner (e.g. session expired) */}
@@ -194,20 +204,7 @@ const SearchPage = () => {
           </div>
         )}
 
-        {/* Brain Graph Overlay */}
-        {isActive && (
-          <div
-            ref={containerRef}
-            className="w-full max-w-2xl h-80 relative z-20"
-          >
-            <BrainGraph
-              svgRef={svgRef}
-              minimized={minimized}
-              onMinimize={() => setMinimized(true)}
-              onRestore={() => setMinimized(false)}
-            />
-          </div>
-        )}
+        {/* Brain Graph — full viewport background during research */}
 
         {/* Progress Feed */}
         <ProgressFeed
