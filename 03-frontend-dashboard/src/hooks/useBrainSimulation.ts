@@ -73,9 +73,24 @@ export function useBrainSimulation(
   const nodesRef = useRef<GraphNode[]>([]);
   const linksRef = useRef<GraphLink[]>([]);
   const moreCountRef = useRef(0);
+  const dimRef = useRef(dimensions);
+  dimRef.current = dimensions;
 
-  // Initialize simulation
+  // Initialize simulation — wait for real dimensions
   useEffect(() => {
+    if (dimensions.width === 0 || dimensions.height === 0) return;
+
+    const cx = dimensions.width / 2;
+    const cy = dimensions.height / 2;
+
+    // Seed any existing nodes near center so they don't cluster at (0,0)
+    for (const node of nodesRef.current) {
+      if ((node.x ?? 0) === 0 && (node.y ?? 0) === 0) {
+        node.x = cx + (Math.random() - 0.5) * 200;
+        node.y = cy + (Math.random() - 0.5) * 200;
+      }
+    }
+
     const sim = d3
       .forceSimulation<GraphNode, GraphLink>(nodesRef.current)
       .force(
@@ -97,8 +112,8 @@ export function useBrainSimulation(
           return ((d as SourceNodeData).radius ?? 10) + 30;
         })
       )
-      .force("x", d3.forceX(dimensions.width / 2).strength(0.025))
-      .force("y", d3.forceY(dimensions.height / 2).strength(0.025))
+      .force("x", d3.forceX(cx).strength(0.025))
+      .force("y", d3.forceY(cy).strength(0.025))
       .velocityDecay(0.4)
       .on("tick", () => {
         if (!svgRef.current) return;
@@ -284,8 +299,11 @@ export function useBrainSimulation(
         radius: computeSourceRadius(score),
         opacity: computeSourceOpacity(score),
       };
-      // Assign random z-depth for 3D effect
+      // Assign random z-depth for 3D effect and seed position near center
       (newNode as any)._z = Math.random() * 2 - 1;
+      const d = dimRef.current;
+      newNode.x = d.width / 2 + (Math.random() - 0.5) * 300;
+      newNode.y = d.height / 2 + (Math.random() - 0.5) * 300;
 
       if (nodesRef.current.some((n) => n.id === source.url)) return;
 
@@ -320,9 +338,14 @@ export function useBrainSimulation(
 
   const addConceptNodes = useCallback(
     (concepts: ConceptNodeData[], sourceLinks: GraphLink[]) => {
-      // Assign z-depth to concepts
+      // Assign z-depth and seed position near center
+      const d = dimRef.current;
       for (const c of concepts) {
         (c as any)._z = Math.random() * 2 - 1;
+        if (!c.x && !c.y) {
+          c.x = d.width / 2 + (Math.random() - 0.5) * 200;
+          c.y = d.height / 2 + (Math.random() - 0.5) * 200;
+        }
       }
       nodesRef.current.push(...concepts);
       linksRef.current.push(...sourceLinks);
