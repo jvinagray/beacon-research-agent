@@ -26,6 +26,10 @@ vi.mock("react-router-dom", async () => {
 vi.mock("@/components/BrainGraph", () => ({
   BrainGraph: (props: Record<string, unknown>) => <div data-testid="brain-graph" {...props} />,
 }));
+vi.mock("@/components/BrainDashboard", () => ({
+  BrainDashboard: (props: Record<string, unknown>) => <div data-testid="brain-dashboard"><div data-testid="brain-graph" /></div>,
+}));
+vi.mock("@/components/BrainDashboard.css", () => ({}));
 vi.mock("@/hooks/useBrainSimulation", () => ({
   useBrainSimulation: () => ({
     addStageNodes: vi.fn(),

@@ -3,14 +3,14 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { X, Clock, Trash2 } from "lucide-react";
 import SearchInput from "@/components/SearchInput";
 import DepthSelector, { type Depth } from "@/components/DepthSelector";
-import ProgressFeed from "@/components/ProgressFeed";
-import { BrainGraph } from "@/components/BrainGraph";
+import { BrainDashboard } from "@/components/BrainDashboard";
 import { useResearch } from "@/hooks/useResearch";
 import { useBrainSimulation } from "@/hooks/useBrainSimulation";
 import { useBrainEventBridge } from "@/hooks/useBrainEventBridge";
 import { prepareRouterState } from "@/lib/prepareRouterState";
 import { saveSearch, loadHistory, removeEntry, clearHistory, type SearchHistoryEntry } from "@/lib/searchHistory";
 import type { SerializedGraphSnapshot } from "@/types/brain-graph";
+import "@/components/BrainDashboard.css";
 
 const SearchPage = () => {
   const [query, setQuery] = useState("");
@@ -57,7 +57,6 @@ const SearchPage = () => {
     const msg = (location.state as { message?: string } | null)?.message;
     if (msg) {
       setInfoBanner(msg);
-      // Clear the location state so banner doesn't reappear on re-render
       window.history.replaceState({}, "");
       const timer = setTimeout(() => setInfoBanner(null), 5000);
       return () => clearTimeout(timer);
@@ -98,7 +97,6 @@ const SearchPage = () => {
       return;
     }
 
-    // Fallback: navigate without snapshot after 5s
     const timer = setTimeout(() => {
       if (!navigatedRef.current) {
         navigatedRef.current = true;
@@ -126,27 +124,29 @@ const SearchPage = () => {
     setHistory([]);
   };
 
+  // ═══ ACTIVE RESEARCH: Full Brain Dashboard ═══
+  if (isActive) {
+    return (
+      <BrainDashboard
+        svgRef={svgRef}
+        containerRef={containerRef}
+        state={state}
+        query={query}
+      />
+    );
+  }
+
+  // ═══ IDLE: Search Form ═══
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 gap-8">
-      {/* Background: brain graph fills viewport during research, gradient orbs otherwise */}
-      {isActive ? (
-        <div ref={containerRef} className="fixed inset-0 z-0">
-          <BrainGraph
-            svgRef={svgRef}
-            minimized={false}
-            onMinimize={() => {}}
-            onRestore={() => {}}
-          />
-        </div>
-      ) : (
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/3 rounded-full blur-3xl" />
-        </div>
-      )}
+      {/* Background orbs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/3 rounded-full blur-3xl" />
+      </div>
 
       <div className="relative z-10 flex flex-col items-center gap-8 w-full">
-        {/* Info Banner (e.g. session expired) */}
+        {/* Info Banner */}
         {infoBanner && (
           <div className="w-full max-w-2xl glass rounded-xl p-4 border-l-4 border-slate-400 flex items-center justify-between animate-fade-in">
             <p className="text-slate-300 text-sm">{infoBanner}</p>
@@ -162,30 +162,19 @@ const SearchPage = () => {
 
         {/* Logo */}
         <div className="flex flex-col items-center gap-2">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground">
-            Beacon
-          </h1>
+          <h1 className="text-4xl font-bold tracking-tight text-foreground">Beacon</h1>
           <p className="text-muted-foreground text-sm">Deep research, fast answers</p>
         </div>
 
-        {/* Search Input */}
-        <SearchInput
-          value={query}
-          onChange={setQuery}
-          onSubmit={handleResearch}
-          disabled={isActive}
-        />
+        <SearchInput value={query} onChange={setQuery} onSubmit={handleResearch} disabled={false} />
+        <DepthSelector value={depth} onChange={setDepth} disabled={false} />
 
-        {/* Depth Selector */}
-        <DepthSelector value={depth} onChange={setDepth} disabled={isActive} />
-
-        {/* Research Button */}
         <button
           onClick={handleResearch}
           className="px-10 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-base
                      glow-primary hover:brightness-110 active:scale-[0.98] transition-all duration-200
                      disabled:opacity-40 disabled:pointer-events-none"
-          disabled={!query.trim() || isActive}
+          disabled={!query.trim()}
         >
           Research
         </button>
@@ -204,18 +193,8 @@ const SearchPage = () => {
           </div>
         )}
 
-        {/* Brain Graph — full viewport background during research */}
-
-        {/* Progress Feed */}
-        <ProgressFeed
-          status={state.status}
-          statusMessage={state.statusMessage}
-          sources={state.sources}
-          sourceTotal={state.sourceTotal}
-        />
-
         {/* Search History */}
-        {!isActive && history.length > 0 && (
+        {history.length > 0 && (
           <div className="w-full max-w-2xl glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
