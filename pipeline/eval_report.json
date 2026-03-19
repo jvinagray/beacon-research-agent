@@ -1,0 +1,687 @@
+{
+  "topic": "Python async patterns",
+  "rag": {
+    "precision_at_k": {
+      "k": 5,
+      "relevant_count": 5,
+      "total": 5,
+      "precision": 1.0,
+      "source_relevance": [
+        {
+          "title": "Python's asyncio: A Hands-On Walkthrough",
+          "relevant": true,
+          "reason": "This source directly addresses Python async patterns, covering core concepts like asyncio, coroutines, event loops, async/await syntax, and concurrent programming patterns - all central to the research topic."
+        },
+        {
+          "title": "Coroutines and Tasks — Python 3.14.3 documentation",
+          "relevant": true,
+          "reason": "This is the official Python documentation for asyncio tasks and coroutines, directly covering core async patterns including create_task(), coroutine scheduling, cancellation, and concurrent execution - essential concepts for Python async patterns research."
+        },
+        {
+          "title": "A Conceptual Overview of asyncio — Python 3.14.3 documentation",
+          "relevant": true,
+          "reason": "This is official Python documentation specifically about asyncio, which is the core library for async programming in Python. It directly addresses Python async patterns by providing conceptual foundations for understanding how asyncio works, making it highly relevant for anyone studying Python async patterns."
+        },
+        {
+          "title": "async-python-patterns | Skills Marke... - LobeHub",
+          "relevant": true,
+          "reason": "The source directly addresses Python async patterns, covering asyncio, async/await, coroutines, tasks, futures, and numerous practical async patterns like concurrent fetching, semaphores, and worker queues - exactly matching the research topic."
+        },
+        {
+          "title": "3 essential async patterns for building a Python service | Elastic Blog",
+          "relevant": true,
+          "reason": "The source directly addresses Python async patterns, covering asyncio tasks, concurrent execution patterns, task management, and common pitfalls like task bombs - all core concepts a researcher studying Python async patterns would find valuable."
+        }
+      ]
+    },
+    "score_distribution": {
+      "mean": 7.7,
+      "std": 1.42,
+      "min_score": 4,
+      "max_score": 9,
+      "histogram": {
+        "9": 3,
+        "8": 4,
+        "7": 2,
+        "4": 1
+      },
+      "calibration_notes": []
+    },
+    "content_type_accuracy": {
+      "total": 10,
+      "matches": 9,
+      "accuracy": 0.9,
+      "details": [
+        {
+          "title": "Python's asyncio: A Hands-On Walkthrough",
+          "pipeline_type": "tutorial",
+          "llm_type": "tutorial",
+          "match": true
+        },
+        {
+          "title": "Coroutines and Tasks — Python 3.14.3 documentation",
+          "pipeline_type": "docs",
+          "llm_type": "docs",
+          "match": true
+        },
+        {
+          "title": "A Conceptual Overview of asyncio — Python 3.14.3 documentation",
+          "pipeline_type": "docs",
+          "llm_type": "tutorial",
+          "match": false
+        },
+        {
+          "title": "async-python-patterns | Skills Marke... - LobeHub",
+          "pipeline_type": "docs",
+          "llm_type": "docs",
+          "match": true
+        },
+        {
+          "title": "3 essential async patterns for building a Python service | Elastic Blog",
+          "pipeline_type": "tutorial",
+          "llm_type": "tutorial",
+          "match": true
+        },
+        {
+          "title": "Asyncio Patterns in Python. Update - Level Up Coding",
+          "pipeline_type": "tutorial",
+          "llm_type": "tutorial",
+          "match": true
+        },
+        {
+          "title": "asyncio — Asynchronous I/O — Python 3.14.3 documentation",
+          "pipeline_type": "docs",
+          "llm_type": "docs",
+          "match": true
+        },
+        {
+          "title": "Asynchronous or Concurrency patterns in Python with Asyncio",
+          "pipeline_type": "tutorial",
+          "llm_type": "tutorial",
+          "match": true
+        },
+        {
+          "title": "Asyncio concepts and design patterns | by Kanak Singh - Medium",
+          "pipeline_type": "tutorial",
+          "llm_type": "tutorial",
+          "match": true
+        },
+        {
+          "title": "Python Async Patterns | Claude Code Skill for Concurrency",
+          "pipeline_type": "other",
+          "llm_type": "other",
+          "match": true
+        }
+      ]
+    },
+    "key_insight_quality": {
+      "mean_score": 7.7,
+      "individual_scores": [
+        {
+          "title": "Python's asyncio: A Hands-On Walkthrough",
+          "score": 8,
+          "reason": "The insight accurately captures the tutorial's main focus areas (coroutines, event loops, non-blocking I/O) and mentions specific practical elements (gather, chained coroutines). It reflects the hands-on nature indicated by the title. Minor improvement could include mentioning the I/O-bound task context and single-threaded concurrency aspect, which are emphasized in the source as key differentiators."
+        },
+        {
+          "title": "Coroutines and Tasks — Python 3.14.3 documentation",
+          "score": 8,
+          "reason": "The insight accurately identifies the source as official Python documentation covering coroutines and tasks in asyncio, and correctly notes the presence of code examples for task creation, cancellation, and timeout handling. It's a solid summary of the main value. Minor improvement could include mentioning the concurrent execution aspect or the eager task execution detail, but overall it captures the key content well."
+        },
+        {
+          "title": "A Conceptual Overview of asyncio — Python 3.14.3 documentation",
+          "score": 8,
+          "reason": "Accurately captures the source's purpose and value as official documentation focused on conceptual understanding and mental model building. Slightly verbose but faithfully represents the 'how and why' learning approach mentioned in the snippet."
+        },
+        {
+          "title": "async-python-patterns | Skills Marke... - LobeHub",
+          "score": 8,
+          "reason": "The insight accurately captures the core value of the source - practical, code-focused guidance on Python async patterns with asyncio primitives and real-world patterns. It correctly highlights concurrent fetching, rate limiting, worker queues, and error handling. Minor improvement could include mentioning async context managers, async iterators, or task cancellation which are explicitly listed in the source, but overall it's a solid and accurate summary."
+        },
+        {
+          "title": "3 essential async patterns for building a Python service | Elastic Blog",
+          "score": 7,
+          "reason": "The insight accurately identifies the general topic (async patterns for Python services) and mentions relevant concepts like task management, cancellation, and bounded concurrency. However, it's somewhat generic and doesn't capture the specific unique value from the snippet - namely the 'task bomb' problem, the sleep cancellation pattern, or the RSS/memory growth concern. The mention of 'Elastic's engineering experience' adds some specificity but the core technical insights could be more precisely articulated."
+        },
+        {
+          "title": "Asyncio Patterns in Python. Update - Level Up Coding",
+          "score": 8,
+          "reason": "The insight accurately captures the main topics covered in the source - asyncio patterns, producer/consumer architecture, task management, and event signaling. It correctly identifies the practical, code-focused nature of the content. Minor improvement could be made by mentioning the batching pattern or the specific asyncio.Event signaling mechanism for termination, which are distinctive elements of this particular article."
+        },
+        {
+          "title": "asyncio — Asynchronous I/O — Python 3.14.3 documentation",
+          "score": 7,
+          "reason": "The insight accurately identifies the source as official Python documentation for asyncio and notes its authoritative nature. However, it slightly overstates the scope by claiming it covers the 'full async/await ecosystem' when the snippet only describes asyncio as a library and foundation for frameworks. The phrase 'comprehensive reference' and 'authoritative source for async patterns' adds reasonable inference but goes slightly beyond what the snippet explicitly states."
+        },
+        {
+          "title": "Asynchronous or Concurrency patterns in Python with Asyncio",
+          "score": 8,
+          "reason": "The insight accurately captures the main thrust of the source - practical asyncio concurrency patterns in Python with worker pools and job queues, backed by real code examples. It correctly identifies the key components visible in the snippets. Minor deduction because it doesn't mention the single-threaded concurrent execution approach or the threading/async hybrid design, which are notable aspects shown in the code snippets."
+        },
+        {
+          "title": "Asyncio concepts and design patterns | by Kanak Singh - Medium",
+          "score": 7,
+          "reason": "The insight accurately captures the key topics covered in the snippet (coroutines, event loops, await keywords, concurrency pitfalls), but it reads somewhat generically. It misses the specific nuance emphasized in the source - that code can *look* like it's running concurrently using asyncio constructs but won't actually achieve concurrency without proper await keywords inside functions, which is the core practical warning being conveyed."
+        },
+        {
+          "title": "Python Async Patterns | Claude Code Skill for Concurrency",
+          "score": 8,
+          "reason": "The insight accurately identifies the source as a marketplace listing rather than a learning resource, and correctly notes the async Python concepts mentioned. It captures the dual nature of the content well, though it could also mention the MCP/Claude integration aspect which is central to what's being offered."
+        }
+      ]
+    },
+    "coverage_completeness": {
+      "expected_subtopics": [
+        "asyncio event loop",
+        "async/await syntax",
+        "coroutines",
+        "Tasks and Futures",
+        "asynchronous context managers",
+        "asynchronous iterators and generators",
+        "concurrent execution with gather and wait",
+        "error handling in async code",
+        "async queue and synchronization primitives",
+        "aiohttp and async HTTP requests",
+        "async database access",
+        "testing async code",
+        "performance and scalability",
+        "thread and process integration with asyncio",
+        "common pitfalls and debugging"
+      ],
+      "covered_subtopics": [
+        "asyncio event loop",
+        "async/await syntax",
+        "coroutines",
+        "Tasks and Futures",
+        "concurrent execution with gather and wait",
+        "error handling in async code",
+        "async queue and synchronization primitives",
+        "thread and process integration with asyncio"
+      ],
+      "missing_subtopics": [
+        "asynchronous context managers",
+        "asynchronous iterators and generators",
+        "aiohttp and async HTTP requests",
+        "async database access",
+        "testing async code",
+        "performance and scalability",
+        "common pitfalls and debugging"
+      ],
+      "coverage_ratio": 0.5333
+    },
+    "extraction_success": {
+      "total": 10,
+      "success_count": 3,
+      "rate": 0.3,
+      "by_method": {
+        "tavily_extract": 3
+      }
+    },
+    "relevance_correlation": {
+      "correlation": 0.7431,
+      "cite_counts": [
+        6,
+        7,
+        6,
+        4,
+        3,
+        2,
+        2,
+        1,
+        2,
+        1
+      ],
+      "scores": [
+        9,
+        9,
+        9,
+        8,
+        8,
+        8,
+        8,
+        7,
+        7,
+        4
+      ],
+      "note": "Positive correlation: higher-scored sources are cited more"
+    }
+  },
+  "synthesis": {
+    "citation_accuracy": {
+      "total_citations": 34,
+      "valid_indices": 34,
+      "invalid_indices": [],
+      "support_scores": [
+        {
+          "claim": "Unlike multiprocessing (which achieves true parallelism across CPU cores) or threading (which uses OS-level thread scheduling), async I/O relies on",
+          "source_index": 1,
+          "source_title": "Python's asyncio: A Hands-On Walkthrough",
+          "supported": false,
+          "reason": "The claim appears to be incomplete (it ends with 'relies on'), but more importantly, the source content provided does not contain explicit comparisons between async I/O, multiprocessing, and threading in terms of true parallelism vs OS-level thread scheduling vs whatever async I/O relies on. The source only briefly mentions that async I/O manages tasks 'within a single thread of execution' but does not make the specific comparative claims about multiprocessing achieving 'true parallelism across CPU cores' or threading using 'OS-level thread scheduling' that the claim references."
+        },
+        {
+          "claim": "The event loop then selects another ready task from its queue, cycling through jobs as they pause and resume",
+          "source_index": 3,
+          "source_title": "A Conceptual Overview of asyncio — Python 3.14.3 documentation",
+          "supported": false,
+          "reason": "The source content provided is truncated and does not contain specific information about the event loop selecting ready tasks from a queue and cycling through jobs as they pause and resume. The content shown only covers introductory material and table of contents elements, without the detailed explanation needed to support this specific claim."
+        },
+        {
+          "claim": "This design avoids the overhead of thread management and can outperform multithreading for large numbers of concurrent I/O-bound tasks",
+          "source_index": 1,
+          "source_title": "Python's asyncio: A Hands-On Walkthrough",
+          "supported": true,
+          "reason": "The source states asyncio 'lets you efficiently manage multiple I/O-bound tasks within a single thread of execution,' which implies avoiding thread management overhead. While the source doesn't explicitly compare performance against multithreading, it does support the core aspects of the claim: single-thread design (avoiding thread management overhead) and handling large numbers of concurrent I/O-bound tasks efficiently."
+        },
+        {
+          "claim": "Simply calling a coroutine function does *not* execute it — it returns a coroutine object that must be explicitly scheduled or awaited",
+          "source_index": 2,
+          "source_title": "Coroutines and Tasks — Python 3.14.3 documentation",
+          "supported": true,
+          "reason": "The source explicitly states 'simply calling a coroutine will not schedule it to be executed' and shows that running a coroutine requires explicit mechanisms like asyncio.run() or awaiting it, directly supporting the claim."
+        },
+        {
+          "claim": "This is a common source of confusion and bugs",
+          "source_index": 9,
+          "source_title": "Asyncio concepts and design patterns | by Kanak Singh - Medium",
+          "supported": true,
+          "reason": "The source explicitly mentions that code 'may give the impression that it's making API fetches concurrently, but it's actually not' and that functions 'won't' run concurrently when expected to, directly supporting the claim that this is a common source of confusion and bugs."
+        },
+        {
+          "claim": "Crucially, you must maintain a reference to task objects to prevent garbage collection before completion",
+          "source_index": 3,
+          "source_title": "A Conceptual Overview of asyncio — Python 3.14.3 documentation",
+          "supported": false,
+          "reason": "The source content provided is truncated and does not contain any information about maintaining references to task objects to prevent garbage collection. The content only covers introductory concepts about asyncio's high-level building blocks."
+        },
+        {
+          "claim": "- **The",
+          "source_index": 3,
+          "source_title": "A Conceptual Overview of asyncio — Python 3.14.3 documentation",
+          "supported": false,
+          "reason": "The claim appears to be incomplete or cut off (it just says '- **The'), making it impossible to evaluate whether the source supports it."
+        },
+        {
+          "claim": "run()`, which handles loop lifecycle management",
+          "source_index": 2,
+          "source_title": "Coroutines and Tasks — Python 3.14.3 documentation",
+          "supported": false,
+          "reason": "The source mentions asyncio.run() as a function to run the top-level entry point, but does not describe it as handling 'loop lifecycle management'. The source refers to asyncio.run() documentation in the asyncio-runner.html page, not in this Coroutines and Tasks page. The claim's specific characterization of run() as handling loop lifecycle management is not supported by the content provided."
+        },
+        {
+          "claim": "- **",
+          "source_index": 2,
+          "source_title": "Coroutines and Tasks — Python 3.14.3 documentation",
+          "supported": false,
+          "reason": "The claim appears to be empty or incomplete (it only contains '**' with no actual content). There is no specific claim to evaluate against the source."
+        },
+        {
+          "claim": "create_task()` enable concurrent dispatch, reducing wall-clock time from sequential sums to the duration of the longest task",
+          "source_index": 2,
+          "source_title": "Coroutines and Tasks — Python 3.14.3 documentation",
+          "supported": false,
+          "reason": "The source content provided does not contain information about create_task() or concurrent dispatch reducing wall-clock time. It only covers basic coroutine usage with async/await syntax and sequential awaiting of coroutines. The section about create_task() and its concurrency benefits appears to be in a different part of the documentation not included in this excerpt."
+        }
+      ]
+    },
+    "groundedness": {
+      "total_claims": 26,
+      "grounded_count": 19,
+      "groundedness_ratio": 0.7308,
+      "details": [
+        {
+          "claim": "Python's asyncio library enables concurrent execution of I/O-bound tasks within a single thread",
+          "grounded": true,
+          "reason": "Source 7 states asyncio is a library to write concurrent code using async/await syntax, and Source 8 references 'single-threaded concurrent execution of Jobs by multiple Workers' in the context of asyncio."
+        },
+        {
+          "claim": "asyncio uses the async/await syntax",
+          "grounded": true,
+          "reason": "Multiple sources confirm this, including Source 7 ('asyncio is a library to write concurrent code using the async/await syntax') and Source 2 ('Coroutines declared with the async/await syntax is the preferred way of writing asyncio applications')."
+        },
+        {
+          "claim": "Multiprocessing achieves true parallelism across CPU cores",
+          "grounded": false,
+          "reason": "None of the available source material explicitly describes multiprocessing as achieving 'true parallelism across CPU cores'."
+        },
+        {
+          "claim": "Threading uses OS-level thread scheduling",
+          "grounded": false,
+          "reason": "None of the available source material explicitly describes threading as using 'OS-level thread scheduling'."
+        },
+        {
+          "claim": "Async I/O relies on cooperative multitasking",
+          "grounded": false,
+          "reason": "While sources describe async I/O behavior consistent with cooperative multitasking, none of the available source material explicitly uses the term 'cooperative multitasking' in the provided excerpts."
+        },
+        {
+          "claim": "Coroutines voluntarily yield control back to the event loop when they encounter an await expression",
+          "grounded": true,
+          "reason": "Source 9 describes how the first await statement 'given control of the program execution back to the event loop', and Source 3 is cited as a conceptual overview supporting this mechanism."
+        },
+        {
+          "claim": "The event loop selects another ready task from its queue when a coroutine yields",
+          "grounded": true,
+          "reason": "Source 9 states the event loop says 'let me see if there are any other async tasks that I can do in the meantime', consistent with selecting another ready task from its queue."
+        },
+        {
+          "claim": "Async I/O avoids the overhead of thread management",
+          "grounded": false,
+          "reason": "None of the available source material explicitly states that async I/O avoids the overhead of thread management."
+        },
+        {
+          "claim": "Async I/O can outperform multithreading for large numbers of concurrent I/O-bound tasks",
+          "grounded": false,
+          "reason": "None of the available source material explicitly claims that async I/O outperforms multithreading for large numbers of concurrent I/O-bound tasks."
+        },
+        {
+          "claim": "All sources agree on the core primitives of asyncio",
+          "grounded": false,
+          "reason": "The paragraph makes a meta-claim about consensus across all sources regarding 'core primitives,' but the paragraph is incomplete and does not specify what those primitives are. Additionally, not all sources explicitly discuss or enumerate 'core primitives' — for example, Sources 5, 6, 8 focus on patterns rather than primitives, and Sources 3, 7, 9 do not exhaustively enumerate a shared set of core primitives. There is no evidence in the sources that they collectively agree on a defined list of core primitives."
+        },
+        {
+          "claim": "Coroutines are defined with `async def` and represent pausable/resumable units of work.",
+          "grounded": true,
+          "reason": "Source 2 confirms coroutines are declared with async/await syntax. Source 3 and Source 9 support the pausable/resumable nature of coroutines."
+        },
+        {
+          "claim": "Simply calling a coroutine function does not execute it — it returns a coroutine object that must be explicitly scheduled or awaited.",
+          "grounded": true,
+          "reason": "Source 2 explicitly states: 'simply calling a coroutine will not schedule it to be executed' and shows the coroutine object being returned."
+        },
+        {
+          "claim": "This (not executing on call) is a common source of confusion and bugs.",
+          "grounded": true,
+          "reason": "Source 9 discusses how calling a coroutine without scheduling it is a source of confusion, showing examples where code appears to run concurrently but doesn't."
+        },
+        {
+          "claim": "Tasks wrap coroutines and schedule them for concurrent execution via `asyncio.create_task()`.",
+          "grounded": true,
+          "reason": "Source 2 covers Tasks and asyncio.create_task() as a mechanism to run coroutines. Source 5 also shows asyncio.create_task() usage for concurrent execution."
+        },
+        {
+          "claim": "You must maintain a reference to task objects to prevent garbage collection before completion.",
+          "grounded": true,
+          "reason": "Source 2 is cited for this claim and is a well-known Python asyncio documentation warning about task references and garbage collection."
+        },
+        {
+          "claim": "The Event Loop is the central executor that manages all scheduled jobs, acting as an 'orchestra conductor' that invokes tasks, waits for I/O readiness, and cycles through work.",
+          "grounded": true,
+          "reason": "Source 3 (A Conceptual Overview of asyncio) describes the event loop's role as a central executor managing tasks and I/O. The 'orchestra conductor' metaphor is consistent with Source 3's conceptual descriptions."
+        },
+        {
+          "claim": "The standard entry point is `asyncio.run()`, which handles loop lifecycle management.",
+          "grounded": true,
+          "reason": "Source 2 explicitly shows asyncio.run() as the entry point for running coroutines, and Source 7 references asyncio as the library using async/await. Source 2 states asyncio.run() is used to run the top-level entry point."
+        },
+        {
+          "claim": "Awaitables encompass three types — coroutines, Tasks, and Futures — that can be used in `await` expressions.",
+          "grounded": true,
+          "reason": "Source 2 (Coroutines and Tasks documentation) covers these three awaitable types. This is standard Python asyncio documentation content."
+        },
+        {
+          "claim": "Futures are low-level and rarely needed in application code.",
+          "grounded": true,
+          "reason": "Source 2 is cited for this claim, and this is consistent with standard Python asyncio documentation which describes Futures as low-level objects rarely needed directly in application code."
+        },
+        {
+          "claim": "There is strong consensus across all sources on several critical points",
+          "grounded": false,
+          "reason": "This is a meta-claim about agreement among sources, but no specific points of consensus are stated in the paragraph itself, making it impossible to verify. The sentence is incomplete and does not contain verifiable factual content grounded in the source material."
+        },
+        {
+          "claim": "Code that uses asyncio constructs but omits await on blocking calls will not actually run concurrently",
+          "grounded": true,
+          "reason": "Source 9 explicitly states: 'The following code still uses asyncio constructs and may give the impression that it's making API fetches concurrently, but it's actually not' and 'you will expect them to run concurrently but they won't because there's no await keyword inside.'"
+        },
+        {
+          "claim": "Using synchronous HTTP libraries is an example of omitting await on blocking calls",
+          "grounded": true,
+          "reason": "Source 9 discusses this in the context of API fetches using non-async code, and the general concept is supported by the sources discussing async-compatible libraries being required."
+        },
+        {
+          "claim": "This is a subtle and common mistake",
+          "grounded": true,
+          "reason": "Source 9 describes this scenario as a common pitfall where code 'may give the impression' of running concurrently but does not."
+        },
+        {
+          "claim": "asyncio is designed for I/O-bound tasks such as network requests, file access, and database queries",
+          "grounded": true,
+          "reason": "Source 3 explicitly differentiates between tasks that don't need CPU time (network requests, file reads) versus CPU-bound tasks. Source 1 has a section titled 'When to Use Async I/O' and Source 7 describes asyncio as a library for concurrent code."
+        },
+        {
+          "claim": "CPU-bound computation should use multiprocessing or thread/process pool executors",
+          "grounded": true,
+          "reason": "Source 3 distinguishes CPU-bound tasks from I/O-bound ones, and Source 10 mentions 'bridge the gap between async code and blocking I/O using thread and process pools,' supporting this claim generally, though no source makes this recommendation with explicit wording."
+        },
+        {
+          "claim": "You must use async-compatible libraries such as aiohttp instead of requests to realize concurrency benefits",
+          "grounded": true,
+          "reason": "Source 4 uses aiohttp in its code examples (async def fetch_url(session: aiohttp.ClientSession...)), and Source 1 has a section titled 'Libraries Supporting Async I/O', supporting the need for async-compatible libraries."
+        }
+      ]
+    },
+    "structural_compliance": [
+      {
+        "artifact_type": "timeline",
+        "total": 10,
+        "valid": 10,
+        "invalid": 0,
+        "errors": []
+      },
+      {
+        "artifact_type": "conflicts",
+        "total": 4,
+        "valid": 4,
+        "invalid": 0,
+        "errors": []
+      },
+      {
+        "artifact_type": "assumptions",
+        "total": 5,
+        "valid": 5,
+        "invalid": 0,
+        "errors": []
+      }
+    ],
+    "content_completeness": {
+      "key_topics": [
+        "coroutines and async/await syntax",
+        "event loop mechanics",
+        "tasks and task creation",
+        "asyncio.gather and concurrent execution",
+        "cancellation and timeout handling",
+        "bounded concurrency and semaphores",
+        "producer/consumer and worker queue patterns",
+        "error handling in async code",
+        "rate limiting",
+        "common pitfalls like missing await"
+      ],
+      "covered": [
+        "coroutines and async/await syntax",
+        "event loop mechanics",
+        "tasks and task creation",
+        "asyncio.gather and concurrent execution",
+        "common pitfalls like missing await"
+      ],
+      "missing": [
+        "cancellation and timeout handling",
+        "bounded concurrency and semaphores",
+        "producer/consumer and worker queue patterns",
+        "error handling in async code",
+        "rate limiting"
+      ],
+      "completeness_ratio": 0.5
+    },
+    "flashcard_quality": {
+      "mean_score": 8.26,
+      "individual_scores": [
+        {
+          "question": "What is asyncio in Python?",
+          "score": 8,
+          "reason": "Clear question with an accurate and informative answer that covers the key concepts: standard library, async/await syntax, single-threaded nature, and cooperative multitasking for I/O-bound tasks. Could be slightly improved by mentioning the event loop as the core mechanism, or noting its use for network/file I/O specifically."
+        },
+        {
+          "question": "What are the three main types of awaitable objects in asyncio?",
+          "score": 8,
+          "reason": "Clear question with accurate answer covering the three main awaitable types. Could be slightly improved by briefly noting what distinguishes each type (e.g., coroutines are async functions, Tasks wrap coroutines for concurrent execution, Futures are low-level awaitable objects)."
+        },
+        {
+          "question": "What is the difference between a coroutine function and a coroutine object?",
+          "score": 9,
+          "reason": "Clear distinction between two related but different concepts. The answer accurately explains both terms and highlights the key behavioral difference (calling doesn't execute the body), which is a common source of confusion for learners."
+        },
+        {
+          "question": "How do you run the top-level entry point coroutine in an asyncio program?",
+          "score": 8,
+          "reason": "Clear question with accurate answer covering the key function and its purpose. Minor improvement could mention that asyncio.run() also closes the event loop on completion and is the recommended approach since Python 3.7, but the core concept is well captured."
+        },
+        {
+          "question": "What function is used to schedule a coroutine to run concurrently as a Task?",
+          "score": 9,
+          "reason": "Clear, specific question about a concrete Python asyncio function. The answer accurately describes asyncio.create_task(), its purpose, behavior, and return value. Minor improvement could mention that it requires a running event loop or note the alternative asyncio.ensure_future(), but the answer is complete for practical study purposes."
+        },
+        {
+          "question": "What is asyncio.TaskGroup and when was it introduced?",
+          "score": 8,
+          "reason": "Clear question with accurate answer covering what TaskGroup is and when it was introduced. Could be slightly improved by mentioning that TaskGroup automatically cancels remaining tasks if one fails (the key advantage of structural concurrency over create_task), which is the most important behavioral distinction."
+        },
+        {
+          "question": "Why is it important to save a reference to a Task created with asyncio.create_task()?",
+          "score": 8,
+          "reason": "The question addresses an important and non-obvious Python asyncio concept. The answer is accurate - tasks can be garbage collected if no strong reference is held. Minor improvement: the answer could mention that asyncio itself warns about this in documentation and suggest the recommended pattern (e.g., storing tasks in a set and using task.add_done_callback to remove them), making it more actionable and complete."
+        },
+        {
+          "question": "How does async I/O differ from threading and multiprocessing?",
+          "score": 8,
+          "reason": "Clear comparison of three concurrency models with accurate distinctions. The answer correctly identifies async I/O as single-threaded with cooperative multitasking, threading as concurrent via turn-taking, and multiprocessing as true parallelism. Could be improved by mentioning the GIL's role in threading, or noting that async I/O is best for I/O-bound tasks while multiprocessing suits CPU-bound tasks, which would add practical context."
+        },
+        {
+          "question": "What happens when you sequentially await two coroutines versus running them as concurrent tasks?",
+          "score": 9,
+          "reason": "Clear, practical question covering a key async/await concept. The answer accurately explains both behaviors with correct timing implications and mentions the specific mechanism (create_task()) for achieving concurrency. Minor improvement could include mentioning asyncio.gather() as an alternative pattern."
+        },
+        {
+          "question": "What is the role of the event loop in asyncio?",
+          "score": 8,
+          "reason": "Clear question with an accurate and well-explained answer covering the core mechanics of the event loop. Minor room for improvement: could mention that it runs in a single thread, or clarify that 'jobs' are coroutines/tasks, which would add precision for study purposes."
+        },
+        {
+          "question": "When should you use asyncio over threading or multiprocessing?",
+          "score": 8,
+          "reason": "Clear question with accurate answer covering the key use case (I/O-bound tasks, many concurrent operations) and the core benefit (no extra threads/processes). Could be slightly improved by briefly contrasting when threading or multiprocessing would be preferred instead, which would sharpen the decision-making guidance."
+        },
+        {
+          "question": "What does the await keyword do in asyncio?",
+          "score": 9,
+          "reason": "Clear, specific question with a comprehensive and accurate answer. Correctly identifies the three key behaviors: pausing execution, yielding to event loop, and waiting for resolution. Also correctly lists the valid awaitable types (coroutine, Task, Future). Minor improvement could mention that await can only be used inside async functions/coroutines."
+        },
+        {
+          "question": "What is a Future object in asyncio?",
+          "score": 8,
+          "reason": "The question is clear and specific, and the answer accurately describes a Future object as a low-level awaitable representing an eventual result. It correctly notes that Futures are typically used by libraries rather than application code. Could be slightly improved by mentioning that Future objects bridge callback-based code with async/await syntax, or noting how they differ from coroutines/tasks."
+        },
+        {
+          "question": "What is the producer/consumer pattern in asyncio?",
+          "score": 8,
+          "reason": "The question is clear and the answer accurately describes the core pattern using asyncio.Queue for producers/consumers. The mention of asyncio.Event for signaling completion adds practical value. Could be improved by mentioning sentinel values as an alternative signaling approach, or noting that multiple consumers can process concurrently, which is the key benefit of the pattern."
+        },
+        {
+          "question": "How can you limit concurrent async operations (rate limiting) in asyncio?",
+          "score": 8,
+          "reason": "Clear question and accurate answer identifying asyncio.Semaphore as the solution. The example with max count of 5 helps illustrate the concept. Could be improved by showing actual code usage pattern (async with semaphore:) to make it more actionable and complete."
+        },
+        {
+          "question": "What is cooperative multitasking in the context of asyncio?",
+          "score": 9,
+          "reason": "Clear, focused question with an accurate and complete answer. Correctly explains the voluntary yielding mechanism via await, ties it specifically to asyncio's event loop, and includes the important practical consequence of a greedy coroutine blocking others. Well-balanced brevity and completeness."
+        },
+        {
+          "question": "Why won't using asyncio constructs guarantee concurrent execution if the await keyword is missing inside a function?",
+          "score": 9,
+          "reason": "The question is specific and targets a common asyncio misconception. The answer accurately explains the mechanism - without await, the coroutine never yields control to the event loop, making asyncio.gather execute them sequentially. The explanation is technically precise and complete, covering both the cause and the observable effect."
+        },
+        {
+          "question": "What is the relationship between Python coroutines and generators?",
+          "score": 7,
+          "reason": "The question is clear and the answer is accurate, but it's somewhat superficial. It correctly identifies that coroutines are built on generators and share pause/resume behavior, but misses key technical details like how 'yield' was extended to support 'send()' and 'throw()', the introduction of 'yield from', or how async/await syntax eventually abstracted away the generator-based implementation. The answer could also clarify that modern Python coroutines (async def) are technically distinct from generator-based coroutines."
+        },
+        {
+          "question": "How does asyncio.gather() work?",
+          "score": 8,
+          "reason": "Clear question and accurate answer covering the key aspects: input types, concurrent scheduling, and list return. Could be improved by mentioning error handling behavior (e.g., return_exceptions parameter) or that it returns results in the order of the input awaitables, not completion order."
+        }
+      ]
+    },
+    "timeline_validity": {
+      "total_events": 10,
+      "has_dates": 10,
+      "chronological": true,
+      "significance_distribution": {
+        "medium": 5,
+        "high": 4,
+        "low": 1
+      },
+      "issues": []
+    },
+    "conflict_quality": {
+      "total": 4,
+      "genuine": 1,
+      "false_positive": 3,
+      "details": [
+        {
+          "topic": "Whether async I/O is superior to threading for I/O-bound tasks",
+          "genuine": false,
+          "reason": "Both claims come from the same source, so this is an internal nuance rather than a conflict between sources. Furthermore, the claims are compatible: threading is good for I/O-bound tasks, AND async I/O can often outperform threading for I/O-bound tasks at scale. One statement doesn't negate the other — they describe a spectrum of suitability depending on context (number of concurrent tasks, overhead tolerance). The source is acknowledging that both approaches work for I/O-bound tasks while noting async I/O has advantages in certain scenarios."
+        },
+        {
+          "topic": "Whether async code runs 'in parallel'",
+          "genuine": true,
+          "reason": "Source A explicitly uses the word 'parallel' to describe async execution, while Source B explicitly states async I/O is not parallelism. These are directly contradictory claims about the same concept, not compatible statements in different contexts. Source A's use of 'parallel' is technically incorrect, but the disagreement is real and not a matter of interpretation or context difference."
+        },
+        {
+          "topic": "Recommended way to run concurrent tasks: gather vs TaskGroup vs create_task",
+          "genuine": false,
+          "reason": "This is a false positive. The sources are not making contradictory claims — they are complementary. Source A documents TaskGroup as a modern alternative, while Source B teaches gather() as a primary pattern. Both approaches are valid and officially supported in Python's asyncio. A tutorial emphasizing gather() is not claiming TaskGroup is wrong or inferior; it may simply predate 3.11 or target a broader audience. There is no direct contradiction, just different pedagogical emphases and temporal contexts."
+        },
+        {
+          "topic": "Whether garbage collection of tasks is a practical concern",
+          "genuine": false,
+          "reason": "Both sources agree that saving task references is important to prevent garbage collection. Source A's 'work pretty hard' caveat doesn't contradict Source B's practical warning — it adds nuance about asyncio's internal efforts while still implying the issue can occur. The difference is emphasis and tone, not a factual disagreement. Both ultimately recommend saving references as best practice."
+        }
+      ]
+    },
+    "assumption_quality": {
+      "total": 5,
+      "valid": 4,
+      "invalid": 1,
+      "details": [
+        {
+          "assumption": "Async I/O is primarily beneficial for I/O-bound tasks and not CPU-bound tasks",
+          "valid": false,
+          "reason": "This is explicitly stated rather than hidden - virtually every asyncio resource directly and prominently explains that asyncio is for I/O-bound tasks and not CPU-bound tasks. Python's own documentation, tutorials, and community resources consistently make this distinction upfront. It is a well-known, openly acknowledged limitation, not a hidden assumption. The concern about hybrid workloads has merit but doesn't make the core statement a hidden assumption."
+        },
+        {
+          "assumption": "All coroutines and tasks will cooperate by yielding control back to the event loop in a timely manner",
+          "valid": true,
+          "reason": "This is a genuinely hidden and high-impact assumption. Asyncio documentation and tutorials typically demonstrate cooperative behavior without explicitly warning that a single blocking call silently destroys the concurrency model for all other tasks. Developers unfamiliar with the distinction between async-compatible and synchronous blocking code can easily introduce starvation bugs that are difficult to detect, as the program continues to run but loses its concurrency benefits entirely. The assumption is non-obvious to practitioners migrating from threaded models and has real production consequences."
+        },
+        {
+          "assumption": "The libraries and dependencies used in an application support async/await natively",
+          "valid": true,
+          "reason": "This is a genuinely hidden and impactful assumption. Async/await tutorials and pattern guides consistently present async code as straightforwardly beneficial without acknowledging that the entire dependency chain must support async for the benefits to materialize. Many real-world projects rely on synchronous libraries (legacy database drivers, third-party SDKs, file I/O wrappers) that cannot simply be swapped out, forcing run_in_executor workarounds that reintroduce thread pool management and negate much of asyncio's concurrency advantage. This ecosystem constraint is rarely surfaced explicitly in the sources, making it a meaningful hidden assumption that could lead developers to adopt async architectures expecting performance gains they won't achieve."
+        },
+        {
+          "assumption": "Single-threaded async concurrency is sufficient and preferable to multi-threaded or multi-process approaches for the target use cases",
+          "valid": true,
+          "reason": "This is a genuinely hidden assumption embedded in the framing of asyncio documentation and tutorials. Sources advocating asyncio implicitly assume the workload is I/O-bound with high concurrency demands, without explicitly acknowledging that threading or multiprocessing may be simpler and equally effective for moderate concurrency or CPU-bound work. This assumption could lead developers to adopt unnecessary complexity, making it meaningful and non-trivial."
+        },
+        {
+          "assumption": "Developers can correctly manage task lifecycles, error propagation, and cancellation in async code without introducing subtle bugs",
+          "valid": true,
+          "reason": "This is a genuinely hidden assumption. Tutorial and documentation sources typically demonstrate the happy path of async patterns without adequately surfacing the failure modes — garbage-collected task references, silent exception swallowing in fire-and-forget tasks, cancellation during cleanup, and ExceptionGroup handling complexity. The gap between how these patterns are presented and their actual production complexity is real and non-trivial, and developers adopting them based on these sources could reasonably underestimate the operational risk."
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-03-06T16:16:51.032780+00:00"
+}
