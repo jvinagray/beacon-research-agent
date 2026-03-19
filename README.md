@@ -1,5 +1,7 @@
 # Beacon Research Agent
 
+> Built as a submission for the **Megadata Hackathon**.
+
 Beacon is an AI-powered research agent that searches the web, evaluates and ranks sources using Claude, extracts content, and synthesizes structured learning artifacts — all streamed in real-time to an interactive dashboard.
 
 Given a research query, Beacon produces:
@@ -190,6 +192,6 @@ npm run test
 
 **Testing:** pytest (async), Vitest, respx
 
-## License
+## About
 
-This project was built as a hackathon entry.
+This project was built as a hackathon submission for the Megadata Hackathon. The entire application — pipeline, API, and frontend — was developed using [Claude Code](https://claude.ai/code).
